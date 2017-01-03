@@ -1,5 +1,7 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,12 +12,7 @@ namespace ChitoseV2
     {
         static void Main(string[] args)
         {
-            client.MessageCreated += async (_, messageInfo) => {
-                if (messageInfo.Message.Content == "angry")
-                {
-                    await client.SendMessage(messageInfo.Message.ChannelID, "online url of image");
-                }
-            };
+            Chitose bot = new ChitoseV2.Chitose(); 
         }
     }
 }
