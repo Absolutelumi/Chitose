@@ -10,6 +10,12 @@ namespace ChitoseV2
     {
         static void Main(string[] args)
         {
+            client.MessageCreated += async (_, messageInfo) => {
+                if (messageInfo.Message.Content == "angry")
+                {
+                    await client.SendMessage(messageInfo.Message.ChannelID, "online url of image");
+                }
+            };
         }
     }
 }
