@@ -156,12 +156,6 @@ namespace ChitoseV2
                 }
             });
 
-            client.ChannelUpdated += (s, e) =>
-            {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
-                audio.Join(voiceChannel);
-            };
-
             commands.CreateCommand("play").Parameter("song").Do(async (e) =>
             {
                 
