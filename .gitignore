@@ -245,4 +245,5 @@ ModelManifest.xml
 .fake/
 
 App.config
-*.settings
+Properties/Settings.settings
+Properties/Settings.Designer.cs
