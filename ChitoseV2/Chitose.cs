@@ -1,36 +1,36 @@
 ﻿using Discord;
 using Discord.Audio;
 using Discord.Commands;
+using Google.Apis.Services;
+using Google.Apis.YouTube.v3;
+using NAudio.Wave;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
+using YoutubeExtractor;
 
 namespace ChitoseV2
 {
-    class Chitose
+    internal class Chitose
     {
-        DiscordClient client;
-        CommandService commands;
-        AudioService audio;
-        
+        private static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
+        private static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
+        private static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
+        private IAudioClient _vClient;
+        private AudioService audio;
+        private DiscordClient client;
+        private CommandService commands;
+        private YouTubeService youtubeService;
 
         public Chitose()
         {
+            youtubeService = new YouTubeService(new BaseClientService.Initializer() { ApiKey = "AIzaSyCiwm6X53K2uXqGfGBVY1RSfp25U7h-wp8", ApplicationName = GetType().Name });
             Random random = new Random();
 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
-        | SecurityProtocolType.Tls11
-        | SecurityProtocolType.Tls12
-        | SecurityProtocolType.Ssl3;
-
-            System.IO.StreamReader filereader = new System.IO.StreamReader("C:\\Users\\Scott\\Desktop\\BOT\\Chitose.txt");
-
-            string line = filereader.ReadLine();
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
 
             client = new DiscordClient(input =>
             {
@@ -41,7 +41,7 @@ namespace ChitoseV2
             client.UsingCommands(input =>
             {
                 input.PrefixChar = '>';
-                input.AllowMentionPrefix = true; 
+                input.AllowMentionPrefix = true;
             });
 
             client.UsingAudio(x =>
@@ -50,16 +50,16 @@ namespace ChitoseV2
             });
 
             commands = client.GetService<CommandService>();
-            
-            audio = client.GetService<AudioService>(); 
-            
-            
+
+            audio = client.GetService<AudioService>();
+
+            System.IO.StreamReader filereader = new System.IO.StreamReader(ConfigDirectory + "Chitose.txt");
+            string line = filereader.ReadLine();
             while (line != null)
             {
                 string[] command = line.Split(';');
-                Console.WriteLine(line); 
+                Console.WriteLine(line);
                 string[] urls = command[1].Split(',');
-                
 
                 commands.CreateCommand(command[0]).Do(async (e) =>
                 {
@@ -68,13 +68,13 @@ namespace ChitoseV2
                 });
                 line = filereader.ReadLine();
             }
-            
-            Console.Clear(); 
+
+            Console.Clear();
 
             client.UserJoined += async (s, e) =>
             {
-                var channel = e.Server.FindChannels("announcements").FirstOrDefault(); 
-                
+                var channel = e.Server.FindChannels("announcements").FirstOrDefault();
+
                 var user = e.User;
 
                 await channel.SendMessage(string.Format("@everyone {0} has joined the server!", user.Name));
@@ -86,7 +86,7 @@ namespace ChitoseV2
 
                 var user = e.User;
 
-                await channel.SendMessage(string.Format("@everyone {0} has left the server.", user.Name)); 
+                await channel.SendMessage(string.Format("@everyone {0} has left the server.", user.Name));
             };
 
             client.UserUpdated += async (s, e) =>
@@ -95,6 +95,7 @@ namespace ChitoseV2
                 if (voiceChannel.Users.Count() == 1)
                 {
                     await audio.Leave(voiceChannel);
+                    _vClient = null;
                 }
             };
 
@@ -107,9 +108,9 @@ namespace ChitoseV2
 
             commands.CreateCommand("myrole").Do(async (e) =>
             {
-                var role = string.Join(" , ", e.User.Roles); 
+                var role = string.Join(" , ", e.User.Roles);
 
-                await e.Channel.SendMessage(string.Format("```Your roles are: {0} ```", role)); 
+                await e.Channel.SendMessage(string.Format("```Your roles are: {0} ```", role));
             });
 
             commands.CreateCommand("myav").Do(async (e) =>
@@ -119,7 +120,7 @@ namespace ChitoseV2
 
             commands.CreateCommand("triggered").Parameter("mention").Do(async (e) =>
             {
-                await e.Message.Delete(); 
+                await e.Message.Delete();
                 await e.Channel.SendMessage(string.Format("元気ね{0}くん。いい事あったかい？", e.GetArg("mention")));
             });
 
@@ -127,12 +128,12 @@ namespace ChitoseV2
             {
                 using (WebClient client = new WebClient())
                 {
-                    client.DownloadFile(new Uri(string.Format("https://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user"))), @"C:\\Users\\Scott\\Desktop\\BOT\\OsuSigTEMP.png");
+                    client.DownloadFile(new Uri(string.Format("https://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user"))), TempDirectory + e.GetArg("user") + "Signature.png");
                 }
 
-                await e.Channel.SendFile("C:\\Users\\Scott\\Desktop\\BOT\\OsuSigTEMP.png");
+                await e.Channel.SendFile(TempDirectory + e.GetArg("user") + "Signature.png");
 
-                File.Delete("C:\\Users\\Scott\\Desktop\\BOT\\OsuSigTEMP.png");
+                File.Delete(TempDirectory + e.GetArg("user") + "Signature.png");
             });
 
             commands.CreateCommand("help").Do(async (e) =>
@@ -149,36 +150,88 @@ namespace ChitoseV2
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
                 if (voiceChannel.Users.Count() != 0)
                 {
-                    await audio.Join(voiceChannel);
-                } else
+                    _vClient = await audio.Join(voiceChannel);
+                }
+                else
                 {
                     await e.Channel.SendMessage("I am not going to an empty room!");
                 }
             });
 
-            client.ChannelUpdated += (s, e) =>
-            {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
-                audio.Join(voiceChannel);
-            };
-
             commands.CreateCommand("play").Parameter("song").Do(async (e) =>
             {
-                
-            }); 
+                if (_vClient != null)
+                {
+                    var searchRequest = youtubeService.Search.List("snippet");
+                    searchRequest.Order = SearchResource.ListRequest.OrderEnum.ViewCount;
+                    searchRequest.Q = e.GetArg("song");
+                    searchRequest.MaxResults = 25;
+                    var response = await searchRequest.ExecuteAsync();
+                    var result = response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
+                    if (result != null)
+                    {
+                        string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
+                        IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
+                        VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
+                        if (video != null)
+                        {
+                            if (video.RequiresDecryption)
+                            {
+                                DownloadUrlResolver.DecryptDownloadUrl(video);
+                            }
+                            var videoDownloader = new VideoDownloader(video, TempDirectory + video.Title + video.VideoExtension);
+                            videoDownloader.Execute();
+                            File.Delete(TempDirectory + video.Title + ".mp3");
+                            Process process = new Process();
+                            process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
+                            process.StartInfo.RedirectStandardOutput = true;
+                            process.StartInfo.RedirectStandardError = true;
+                            process.StartInfo.Arguments = $"-i \"{TempDirectory + video.Title + video.VideoExtension}\" \"{TempDirectory + video.Title + ".mp3"}\"";
+                            process.StartInfo.UseShellExecute = false;
+                            process.StartInfo.CreateNoWindow = true;
+                            process.Start();
+                            process.WaitForExit();
+                            process.Close();
+                            SendAudio(TempDirectory + video.Title + ".mp3");
+                        }
+                    }
+                }
+            });
 
             client.ExecuteAndWait(async () =>
             {
                 await client.Connect("MjY1MzU3OTQwNDU2Njg1NTc5.C08iSQ.0JuccBwAn2mYftmvgNdygJyIK-w", TokenType.Bot);
             });
+        }
 
+        public void SendAudio(string filePath)
+        {
+            var channelCount = client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
+            var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
+            using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
+            using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
+            {
+                resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
+                int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
+                byte[] buffer = new byte[blockSize];
+                int byteCount;
+
+                while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0) // Read audio into our buffer, and keep a loop open while data is present
+                {
+                    if (byteCount < blockSize)
+                    {
+                        // Incomplete Frame
+                        for (int i = byteCount; i < blockSize; i++)
+                            buffer[i] = 0;
+                    }
+                    _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
+                }
+            }
         }
 
         private void Log(object sender, LogMessageEventArgs e)
         {
-            Console.WriteLine(e.Message); 
+            Console.WriteLine(e.Message);
         }
-
-       
     }
 }
