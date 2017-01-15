@@ -21,6 +21,8 @@ namespace ChitoseV2
         private static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
         private IAudioClient _vClient;
         private AudioService audio;
+        private AudioStatus audioStatus = AudioStatus.Stopped;
+        private object AudioStatusLock = new object();
         private DiscordClient client;
         private CommandService commands;
         private YouTubeService youtubeService;
@@ -158,13 +160,21 @@ namespace ChitoseV2
                 }
             });
 
-            commands.CreateCommand("play").Parameter("song").Do(async (e) =>
+            commands.CreateCommand("play").Parameter("song", ParameterType.Multiple).Do(async (e) =>
             {
                 if (_vClient != null)
                 {
+                    if (audioStatus == AudioStatus.Playing)
+                    {
+                        lock (AudioStatusLock)
+                        {
+                            audioStatus = AudioStatus.Stopping;
+                            Console.WriteLine("Audio Stop Requested");
+                        }
+                    }
                     var searchRequest = youtubeService.Search.List("snippet");
                     searchRequest.Order = SearchResource.ListRequest.OrderEnum.ViewCount;
-                    searchRequest.Q = e.GetArg("song");
+                    searchRequest.Q = string.Join("+", e.Args);
                     searchRequest.MaxResults = 25;
                     var response = await searchRequest.ExecuteAsync();
                     var result = response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
@@ -179,20 +189,22 @@ namespace ChitoseV2
                             {
                                 DownloadUrlResolver.DecryptDownloadUrl(video);
                             }
-                            var videoDownloader = new VideoDownloader(video, TempDirectory + video.Title + video.VideoExtension);
+                            string videoFile = TempDirectory + CleanFileName(video.Title + video.VideoExtension);
+                            string audioFile = TempDirectory + CleanFileName(video.Title + ".mp3");
+                            var videoDownloader = new VideoDownloader(video, videoFile);
                             videoDownloader.Execute();
-                            File.Delete(TempDirectory + video.Title + ".mp3");
+                            File.Delete(audioFile);
                             Process process = new Process();
                             process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
                             process.StartInfo.RedirectStandardOutput = true;
                             process.StartInfo.RedirectStandardError = true;
-                            process.StartInfo.Arguments = $"-i \"{TempDirectory + video.Title + video.VideoExtension}\" \"{TempDirectory + video.Title + ".mp3"}\"";
+                            process.StartInfo.Arguments = $"-i \"{videoFile}\" \"{audioFile}\"";
                             process.StartInfo.UseShellExecute = false;
                             process.StartInfo.CreateNoWindow = true;
                             process.Start();
                             process.WaitForExit();
                             process.Close();
-                            SendAudio(TempDirectory + video.Title + ".mp3");
+                            SendAudio(audioFile);
                         }
                     }
                 }
@@ -206,6 +218,11 @@ namespace ChitoseV2
 
         public void SendAudio(string filePath)
         {
+            lock (AudioStatusLock)
+            {
+                audioStatus = AudioStatus.Playing;
+                Console.WriteLine("Audio Starting");
+            }
             var channelCount = client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
             var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
             using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
@@ -218,6 +235,15 @@ namespace ChitoseV2
 
                 while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0) // Read audio into our buffer, and keep a loop open while data is present
                 {
+                    lock (AudioStatusLock)
+                    {
+                        if (audioStatus == AudioStatus.Stopping)
+                        {
+                            audioStatus = AudioStatus.Stopped;
+                            Console.WriteLine("Audio Stopped");
+                            return;
+                        }
+                    }
                     if (byteCount < blockSize)
                     {
                         // Incomplete Frame
@@ -229,9 +255,16 @@ namespace ChitoseV2
             }
         }
 
+        private static string CleanFileName(string fileName)
+        {
+            return Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
+        }
+
         private void Log(object sender, LogMessageEventArgs e)
         {
             Console.WriteLine(e.Message);
         }
+
+        private enum AudioStatus { Stopped, Stopping, Playing };
     }
 }
