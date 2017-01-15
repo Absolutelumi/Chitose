@@ -53,7 +53,7 @@ namespace ChitoseV2
             
             audio = client.GetService<AudioService>(); 
             
-
+            
             while (line != null)
             {
                 string[] command = line.Split(';');
@@ -68,7 +68,7 @@ namespace ChitoseV2
                 });
                 line = filereader.ReadLine();
             }
-
+            
             Console.Clear(); 
 
             client.UserJoined += async (s, e) =>
@@ -87,6 +87,15 @@ namespace ChitoseV2
                 var user = e.User;
 
                 await channel.SendMessage(string.Format("@everyone {0} has left the server.", user.Name)); 
+            };
+
+            client.UserUpdated += async (s, e) =>
+            {
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
+                if (voiceChannel.Users.Count() == 1)
+                {
+                    await audio.Leave(voiceChannel);
+                }
             };
 
             client.UserBanned += async (s, e) =>
@@ -138,20 +147,19 @@ namespace ChitoseV2
             commands.CreateCommand("join").Do(async (e) =>
             {
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
-
-                await audio.Join(voiceChannel); 
-
-                
+                if (voiceChannel.Users.Count() != 0)
+                {
+                    await audio.Join(voiceChannel);
+                } else
+                {
+                    await e.Channel.SendMessage("I am not going to an empty room!");
+                }
             });
 
             client.ChannelUpdated += (s, e) =>
             {
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
-
-                if (e.After.Users.Count() == 1)
-                {
-                    audio.Leave(voiceChannel); 
-                }
+                audio.Join(voiceChannel);
             };
 
             commands.CreateCommand("play").Parameter("song").Do(async (e) =>
