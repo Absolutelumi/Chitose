@@ -3,7 +3,9 @@ using Discord.Audio;
 using Discord.Commands;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,12 +17,16 @@ namespace ChitoseV2
         DiscordClient client;
         CommandService commands;
         AudioService audio;
-
         
 
         public Chitose()
         {
             Random random = new Random();
+
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls
+        | SecurityProtocolType.Tls11
+        | SecurityProtocolType.Tls12
+        | SecurityProtocolType.Ssl3;
 
             System.IO.StreamReader filereader = new System.IO.StreamReader("C:\\Users\\Scott\\Desktop\\BOT\\Chitose.txt");
 
@@ -110,7 +116,14 @@ namespace ChitoseV2
 
             commands.CreateCommand("osu").Parameter("user").Do(async (e) =>
             {
-                await e.Channel.SendMessage(string.Format("https://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user")));
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadFile(new Uri(string.Format("https://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user"))), @"C:\\Users\\Scott\\Desktop\\BOT\\OsuSigTEMP.png");
+                }
+
+                await e.Channel.SendFile("C:\\Users\\Scott\\Desktop\\BOT\\OsuSigTEMP.png");
+
+                File.Delete("C:\\Users\\Scott\\Desktop\\BOT\\OsuSigTEMP.png");
             });
 
             commands.CreateCommand("help").Do(async (e) =>
@@ -120,12 +133,31 @@ namespace ChitoseV2
                 await e.Channel.SendMessage("```Commands : 'myrole' , 'myav' , 'osu (user)' ```");
             });
 
-            commands.CreateCommand("join").Parameter("channel").Do(async (e) =>
-            {
-                var voiceChannel = client.FindServers("TTR").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
+            // Music
 
-                await voiceChannel.JoinAudio(); 
+            commands.CreateCommand("join").Do(async (e) =>
+            {
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
+
+                await audio.Join(voiceChannel); 
+
+                
             });
+
+            client.ChannelUpdated += (s, e) =>
+            {
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
+
+                if (e.After.Users.Count() == 1)
+                {
+                    audio.Leave(voiceChannel); 
+                }
+            };
+
+            commands.CreateCommand("play").Parameter("song").Do(async (e) =>
+            {
+                
+            }); 
 
             client.ExecuteAndWait(async () =>
             {
