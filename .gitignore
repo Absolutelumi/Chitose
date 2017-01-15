@@ -243,3 +243,7 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+App.config
+Properties/Settings.settings
+Properties/Settings.Designer.cs
