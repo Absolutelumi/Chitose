@@ -1,4 +1,5 @@
 ﻿using Discord;
+using Discord.Audio;
 using Discord.Commands;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,10 @@ namespace ChitoseV2
     class Chitose
     {
         DiscordClient client;
-        CommandService commands; 
+        CommandService commands;
+        AudioService audio;
+
+        
 
         public Chitose()
         {
@@ -34,7 +38,15 @@ namespace ChitoseV2
                 input.AllowMentionPrefix = true; 
             });
 
+            client.UsingAudio(x => 
+            {
+                x.Mode = AudioMode.Outgoing; 
+            });
+
             commands = client.GetService<CommandService>();
+            
+            audio = client.GetService<AudioService>(); 
+            
 
             while (line != null)
             {
@@ -98,7 +110,7 @@ namespace ChitoseV2
 
             commands.CreateCommand("osu").Parameter("user").Do(async (e) =>
             {
-                await e.Channel.SendMessage(string.Format("http://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user")));
+                await e.Channel.SendMessage(string.Format("https://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user")));
             });
 
             commands.CreateCommand("help").Do(async (e) =>
@@ -106,6 +118,15 @@ namespace ChitoseV2
                 await e.Channel.SendMessage(string.Format("```{0}Prefix : '>' \n Chitose reaction picture commands : \n angry  - happy - thinking \n disappointed - annoyed - hopeful \n shocked```", e.User.Mention));
 
                 await e.Channel.SendMessage("```Commands : 'myrole' , 'myav' , 'osu (user)' ```");
+            });
+
+            commands.CreateCommand("join").Do(async (e) =>
+            {
+                var musicchannel = e.Server.FindChannels("music").FirstOrDefault(); 
+
+                await audio.Join(musicchannel);
+
+                await e.Channel.SendMessage(string.Format("```{0}Prefix : '>' \n Chitose reaction picture commands : \n angry  - happy - thinking \n disappointed - annoyed - hopeful \n shocked```", e.User.Mention));
             });
 
             client.ExecuteAndWait(async () =>
