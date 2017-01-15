@@ -38,9 +38,9 @@ namespace ChitoseV2
                 input.AllowMentionPrefix = true; 
             });
 
-            client.UsingAudio(x => 
+            client.UsingAudio(x =>
             {
-                x.Mode = AudioMode.Outgoing; 
+                x.Mode = AudioMode.Outgoing;
             });
 
             commands = client.GetService<CommandService>();
@@ -120,13 +120,11 @@ namespace ChitoseV2
                 await e.Channel.SendMessage("```Commands : 'myrole' , 'myav' , 'osu (user)' ```");
             });
 
-            commands.CreateCommand("join").Do(async (e) =>
+            commands.CreateCommand("join").Parameter("channel").Do(async (e) =>
             {
-                var musicchannel = e.Server.FindChannels("music").FirstOrDefault(); 
+                var voiceChannel = client.FindServers("TTR").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
 
-                await audio.Join(musicchannel);
-
-                await e.Channel.SendMessage(string.Format("```{0}Prefix : '>' \n Chitose reaction picture commands : \n angry  - happy - thinking \n disappointed - annoyed - hopeful \n shocked```", e.User.Mention));
+                await voiceChannel.JoinAudio(); 
             });
 
             client.ExecuteAndWait(async () =>
