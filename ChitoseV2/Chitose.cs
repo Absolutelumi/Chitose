@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
+using System.Web.Script.Serialization;
 using YoutubeExtractor;
 
 namespace ChitoseV2
@@ -28,6 +30,7 @@ namespace ChitoseV2
         private DiscordClient client;
         private CommandService commands;
         private YouTubeService youtubeService;
+        private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
 
         public Chitose()
         {
@@ -232,10 +235,57 @@ namespace ChitoseV2
                 }
             });
 
+            //Japanese
+
+            commands.CreateCommand("jisho").Parameter("search", ParameterType.Multiple).Do(async (e) =>
+            {
+                HttpWebRequest getJapanese = WebRequest.CreateHttp(@"http://jisho.org/api/v1/search/words?keyword=" + string.Join("+", e.Args));
+                using (Stream response = (await getJapanese.GetResponseAsync()).GetResponseStream())
+                {
+                    string jsonResult = new StreamReader(response).ReadToEnd();
+                    JishoResponse result = json.Deserialize<JishoResponse>(jsonResult);
+                    StringBuilder message = new StringBuilder();
+                    for(int i = 0; i < Math.Min(5, result.data.Length); i++)
+                    {
+                        JishoResponse.Result word = result.data[i];
+                        message.AppendLine("```");
+                        message.AppendLine(word.is_common ? "Common": "Uncommon");
+                        message.AppendLine("Japanese Translations:");
+                        message.AppendLine("\t" + string.Join(", ", word.japanese.Select(o => o.word == null ? o.reading : o.word + " (" + o.reading + ")")));
+                        message.AppendLine("English Translations:");
+                        message.AppendLine("\t" + string.Join("\n\t", word.senses.Select(o => string.Join(", ", o.english_definitions) + " (" + string.Join(", ", o.parts_of_speech) + ")")));
+                        message.AppendLine("```");
+                    }
+                    await e.Channel.SendMessage(message.ToString());
+                }
+            });
+
             client.ExecuteAndWait(async () =>
             {
                 await client.Connect("MjY1MzU3OTQwNDU2Njg1NTc5.C08iSQ.0JuccBwAn2mYftmvgNdygJyIK-w", TokenType.Bot);
             });
+        }
+
+        public class JishoResponse
+        {
+            public class Result
+            {
+                public class Japanese
+                {
+                    public string word;
+                    public string reading;
+                }
+                public class Details
+                {
+                    public string[] english_definitions;
+                    public string[] parts_of_speech;
+                }
+                public bool is_common;
+                public string[] tags;
+                public Japanese[] japanese;
+                public Details[] senses;
+            }
+            public Result[] data;
         }
 
         public void SendAudio(string filePath)

@@ -244,6 +244,6 @@ ModelManifest.xml
 # FAKE - F# Make
 .fake/
 
-App.config
-Properties/Settings.settings
-Properties/Settings.Designer.cs
+ChitoseV2/App.config
+ChitoseV2/Properties/Settings.settings
+ChitoseV2/Properties/Settings.Designer.cs
