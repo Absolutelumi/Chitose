@@ -98,7 +98,7 @@ namespace ChitoseV2
 
             client.UserUpdated += async (s, e) =>
             {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
                 if (voiceChannel.Users.Count() == 1)
                 {
                     await audio.Leave(voiceChannel);
@@ -164,6 +164,13 @@ namespace ChitoseV2
                     await e.Channel.SendMessage("I am not going to an empty room!");
                 }
             });
+
+            commands.CreateCommand("leave").Do(async (e) =>
+            {
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
+
+                await audio.Leave(voiceChannel);
+            }); 
 
             commands.CreateCommand("play").Parameter("song", ParameterType.Multiple).Do(async (e) =>
             {
