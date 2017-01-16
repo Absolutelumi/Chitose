@@ -44,7 +44,7 @@ namespace ChitoseV2
 
             client.UsingCommands(input =>
             {
-                input.PrefixChar = '>';
+                input.PrefixChar = '!';
                 input.AllowMentionPrefix = true;
             });
 
