@@ -23,6 +23,8 @@ namespace ChitoseV2
         private AudioService audio;
         private AudioStatus audioStatus = AudioStatus.Stopped;
         private object AudioStatusLock = new object();
+        private float volume = 1.0f;
+        private object VolumeLock = new object();
         private DiscordClient client;
         private CommandService commands;
         private YouTubeService youtubeService;
@@ -173,7 +175,7 @@ namespace ChitoseV2
                         }
                     }
                     var searchRequest = youtubeService.Search.List("snippet");
-                    searchRequest.Order = SearchResource.ListRequest.OrderEnum.ViewCount;
+                    searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
                     searchRequest.Q = string.Join("+", e.Args);
                     searchRequest.MaxResults = 25;
                     var response = await searchRequest.ExecuteAsync();
@@ -181,6 +183,7 @@ namespace ChitoseV2
                     if (result != null)
                     {
                         string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
+                        await e.Channel.SendMessage("Playing " + link);
                         IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
                         VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
                         if (video != null)
@@ -206,6 +209,18 @@ namespace ChitoseV2
                             process.Close();
                             SendAudio(audioFile);
                         }
+                    }
+                }
+            });
+
+            commands.CreateCommand("volume").Parameter("volume").Do((e) =>
+            {
+                float value = float.Parse(e.GetArg("volume"));
+                if (value >= 0 && value <= 1)
+                {
+                    lock(VolumeLock)
+                    {
+                        volume = value;
                     }
                 }
             });
@@ -249,6 +264,16 @@ namespace ChitoseV2
                         // Incomplete Frame
                         for (int i = byteCount; i < blockSize; i++)
                             buffer[i] = 0;
+                    }
+                    for(int i = 0; i < buffer.Length; i += 2)
+                    {
+                        short sample = (short)(buffer[i] | (buffer[i + 1] << 8));
+                        lock (VolumeLock)
+                        {
+                            short result = (short)(sample * volume);
+                            buffer[i] = (byte)(result & 0xFF);
+                            buffer[i + 1] = (byte)(result >> 8);
+                        }
                     }
                     _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
                 }
