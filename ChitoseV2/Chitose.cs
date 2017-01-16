@@ -4,6 +4,7 @@ using Discord.Commands;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using NAudio.Wave;
+using RedditSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,6 +37,10 @@ namespace ChitoseV2
         {
             youtubeService = new YouTubeService(new BaseClientService.Initializer() { ApiKey = "AIzaSyCiwm6X53K2uXqGfGBVY1RSfp25U7h-wp8", ApplicationName = GetType().Name });
             Random random = new Random();
+
+            //Reddit Variables 
+            var reddit = new Reddit();
+            var reddituser = reddit.LogIn("absoIutelumi", "jackson1");
 
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
 
@@ -99,10 +104,14 @@ namespace ChitoseV2
             client.UserUpdated += async (s, e) =>
             {
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
-                if (voiceChannel.Users.Count() == 1)
+
+                if (voiceChannel != null)
                 {
-                    await audio.Leave(voiceChannel);
-                    _vClient = null;
+                    if (voiceChannel.Users.Count() == 1)
+                    {
+                        await audio.Leave(voiceChannel);
+                        _vClient = null;
+                    }
                 }
             };
 
@@ -257,6 +266,21 @@ namespace ChitoseV2
                         message.AppendLine("```");
                     }
                     await e.Channel.SendMessage(message.ToString());
+                }
+            });
+
+            //Pictures
+
+            commands.CreateCommand("reddit").Parameter("subreddit").Do(async (e) =>
+            {
+                var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
+                
+
+                foreach (var post in subreddit.New.Take(1))
+                {
+                    var redditpost = post.Url;
+
+                    await e.Channel.SendMessage(redditpost.ToString());
                 }
             });
 
