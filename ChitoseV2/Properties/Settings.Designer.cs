@@ -25,7 +25,7 @@ namespace ChitoseV2.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\ffmpeg-3.2.2-win64-static\\bin\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\ffmpeg-3.2.2-win64-static")]
         public string FfmpegPath {
             get {
                 return ((string)(this["FfmpegPath"]));
@@ -34,7 +34,7 @@ namespace ChitoseV2.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Samuel\\Documents\\ChitoseV2\\Temp\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Scott\\Desktop\\SpaceInvaders2.0\\ChitoseV2\\Temp\\")]
         public string TempDirectory {
             get {
                 return ((string)(this["TempDirectory"]));
@@ -43,7 +43,7 @@ namespace ChitoseV2.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Samuel\\Documents\\ChitoseV2\\Config\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Scott\\Desktop\\SpaceInvaders2.0\\ChitoseV2\\")]
         public string ConfigDirectory {
             get {
                 return ((string)(this["ConfigDirectory"]));

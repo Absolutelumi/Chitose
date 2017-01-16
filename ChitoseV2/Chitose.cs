@@ -147,9 +147,9 @@ namespace ChitoseV2
 
             // Music
 
-            commands.CreateCommand("join").Do(async (e) =>
+            commands.CreateCommand("join").Parameter("channel").Do(async (e) =>
             {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == "Music");
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == e.GetArg("channel"));
                 if (voiceChannel.Users.Count() != 0)
                 {
                     _vClient = await audio.Join(voiceChannel);

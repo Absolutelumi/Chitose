@@ -3,13 +3,13 @@
   <Profiles />
   <Settings>
     <Setting Name="FfmpegPath" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">C:\ffmpeg-3.2.2-win64-static\bin\</Value>
+      <Value Profile="(Default)">C:\ffmpeg-3.2.2-win64-static</Value>
     </Setting>
     <Setting Name="TempDirectory" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">C:\Users\Samuel\Documents\ChitoseV2\Temp\</Value>
+      <Value Profile="(Default)">C:\Users\Scott\Desktop\SpaceInvaders2.0\ChitoseV2\Temp\</Value>
     </Setting>
     <Setting Name="ConfigDirectory" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">C:\Users\Samuel\Documents\ChitoseV2\Config\</Value>
+      <Value Profile="(Default)">C:\Users\Scott\Desktop\SpaceInvaders2.0\ChitoseV2\</Value>
     </Setting>
   </Settings>
 </SettingsFile>
