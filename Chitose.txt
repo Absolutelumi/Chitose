@@ -1,0 +1,7 @@
+angry;http://i.imgur.com/b6uQ2h3.jpg,http://i.imgur.com/lj79YCb.jpg,http://i.imgur.com/vvjuVpo.jpg,http://i.imgur.com/Qxi3hAt.jpg
+happy;http://i.imgur.com/oxalgZk.jpg,http://i.imgur.com/U3CL8fs.jpg,http://i.imgur.com/bpeZN88.jpg,http://i.imgur.com/Q64gLJt.jpg,http://i.imgur.com/tAIjkqv.jpg,http://i.imgur.com/PVw15ZG.jpg,http://i.imgur.com/ImuziTe.jpg
+shocked;http://i.imgur.com/hm3YpNr.jpg,http://i.imgur.com/yQWmz3E.jpg,http://i.imgur.com/16R7Mhm.jpg,http://i.imgur.com/ptr3ooV.jpg,http://i.imgur.com/gFXvDPQ.jpg
+annoyed;http://i.imgur.com/MBCIIOP.jpg,http://i.imgur.com/DRL6p1W.jpg,http://i.imgur.com/X55CFKN.jpg,http://i.imgur.com/SZu64dW.jpg,http://i.imgur.com/NDYirtB.jpg
+disappointed;http://i.imgur.com/KWvTyQZ.jpg,http://i.imgur.com/OOE7b0m.jpg,http://i.imgur.com/AiJc5H6.jpg,http://i.imgur.com/MFbtUGB.jpg,http://i.imgur.com/8zkp1g5.jpg,http://i.imgur.com/1SIW8dZ.jpg,http://i.imgur.com/qRr5pQd.jpg
+hopeful;http://i.imgur.com/HsRWc7J.jpg,http://i.imgur.com/ABVbxGD.jpg,http://i.imgur.com/pOVJ0Ml.jpg,http://i.imgur.com/xsdY9Ks.jpg
+thinking;http://i.imgur.com/gFVFqbq.jpg,http://i.imgur.com/bHOBgL1.jpg,http://i.imgur.com/DV03EVp.jpg
