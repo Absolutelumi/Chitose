@@ -23,6 +23,8 @@ namespace ChitoseV2
         private AudioService audio;
         private AudioStatus audioStatus = AudioStatus.Stopped;
         private object AudioStatusLock = new object();
+        private float volume = 1.0f;
+        private object VolumeLock = new object();
         private DiscordClient client;
         private CommandService commands;
         private YouTubeService youtubeService;
@@ -180,7 +182,7 @@ namespace ChitoseV2
                         }
                     }
                     var searchRequest = youtubeService.Search.List("snippet");
-                    searchRequest.Order = SearchResource.ListRequest.OrderEnum.ViewCount;
+                    searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
                     searchRequest.Q = string.Join("+", e.Args);
                     searchRequest.MaxResults = 25;
                     var response = await searchRequest.ExecuteAsync();
@@ -188,6 +190,7 @@ namespace ChitoseV2
                     if (result != null)
                     {
                         string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
+                        await e.Channel.SendMessage("Playing " + link);
                         IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
                         VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
                         if (video != null)
@@ -217,6 +220,18 @@ namespace ChitoseV2
                 }
             });
 
+            commands.CreateCommand("volume").Parameter("volume").Do((e) =>
+            {
+                float value = float.Parse(e.GetArg("volume"));
+                if (value >= 0 && value <= 1)
+                {
+                    lock(VolumeLock)
+                    {
+                        volume = value;
+                    }
+                }
+            });
+
             client.ExecuteAndWait(async () =>
             {
                 await client.Connect("MjY1MzU3OTQwNDU2Njg1NTc5.C08iSQ.0JuccBwAn2mYftmvgNdygJyIK-w", TokenType.Bot);
@@ -240,27 +255,36 @@ namespace ChitoseV2
                     byte[] buffer = new byte[blockSize];
                     int byteCount;
 
-                    while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0) // Read audio into our buffer, and keep a loop open while data is present
+                while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0) // Read audio into our buffer, and keep a loop open while data is present
+                {
+                    lock (AudioStatusLock)
                     {
-                        lock (AudioStatusLock)
+                        if (audioStatus == AudioStatus.Stopping)
                         {
-                            if (audioStatus == AudioStatus.Stopping)
-                            {
-                                audioStatus = AudioStatus.Stopped;
-                                Console.WriteLine("Audio Stopped");
-                                return;
-                            }
+                            audioStatus = AudioStatus.Stopped;
+                            Console.WriteLine("Audio Stopped");
+                            return;
                         }
-                        if (byteCount < blockSize)
-                        {
-                            // Incomplete Frame
-                            for (int i = byteCount; i < blockSize; i++)
-                                buffer[i] = 0;
-                        }
-                        _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
                     }
+                    if (byteCount < blockSize)
+                    {
+                        // Incomplete Frame
+                        for (int i = byteCount; i < blockSize; i++)
+                            buffer[i] = 0;
+                    }
+                    for(int i = 0; i < buffer.Length; i += 2)
+                    {
+                        short sample = (short)(buffer[i] | (buffer[i + 1] << 8));
+                        lock (VolumeLock)
+                        {
+                            short result = (short)(sample * volume);
+                            buffer[i] = (byte)(result & 0xFF);
+                            buffer[i + 1] = (byte)(result >> 8);
+                        }
+                    }
+                    _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
                 }
-            
+            }
         }
 
         private static string CleanFileName(string fileName)
