@@ -179,7 +179,19 @@ namespace ChitoseV2
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
 
                 await audio.Leave(voiceChannel);
-            }); 
+            });
+
+            commands.CreateCommand("pause").Do((e) =>
+            {
+                Process process = new Process();
+                process.Close(); 
+            });
+
+            commands.CreateCommand("resume").Do((e) =>
+           {
+               Process process = new Process();
+               process.Start();
+           });
 
             commands.CreateCommand("play").Parameter("song", ParameterType.Multiple).Do(async (e) =>
             {
@@ -271,18 +283,32 @@ namespace ChitoseV2
 
             //Pictures
 
-            commands.CreateCommand("reddit").Parameter("subreddit").Do(async (e) =>
+            client.GetService<CommandService>().CreateGroup("reddit", cgb =>
             {
-                var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
-                
-
-                foreach (var post in subreddit.New.Take(1))
+                cgb.CreateCommand("hot").Parameter("subreddit").Do(async (e) =>
                 {
-                    var redditpost = post.Url;
+                    var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
+                    int indexer = random.Next(25);
 
-                    await e.Channel.SendMessage(redditpost.ToString());
-                }
-            });
+                    var postlist = subreddit.Hot.Take(25);
+                    var post = postlist.ToList()[indexer];
+                    string posturl = post.Url.ToString();
+
+                    await e.Channel.SendMessage(posturl);
+                });
+
+                cgb.CreateCommand("new").Parameter("subreddit").Do(async (e) =>
+                {
+                    var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
+                    int indexer = random.Next(25);
+
+                    var postlist = subreddit.New.Take(25);
+                    var post = postlist.ToList()[indexer];
+                    string posturl = post.Url.ToString();
+
+                    await e.Channel.SendMessage(posturl);
+                });
+            }); 
 
             client.ExecuteAndWait(async () =>
             {
