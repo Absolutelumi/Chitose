@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -35,12 +34,14 @@ namespace Mayushii.Services
         private static Post[] GetPosts(string[] arg, int? page = null)
         {
             StringBuilder urlBuilder = new StringBuilder();
-            urlBuilder.AppendFormat("https://danbooru.donmai.us/posts.json?limit=100&tags=*{0}*", string.Join("+", arg));
+            urlBuilder.AppendFormat("https://danbooru.donmai.us/posts.json?limit=100&tags={0}", string.Join("+", arg));
             if (page != null)
             {
                 urlBuilder.AppendFormat("&page={0}", page);
             }
+
             HttpWebRequest postRequest = WebRequest.CreateHttp(urlBuilder.ToString());
+
             try
             {
                 WebResponse response = postRequest.GetResponse();

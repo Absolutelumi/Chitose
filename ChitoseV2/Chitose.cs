@@ -37,14 +37,14 @@ namespace ChitoseV2
         public Chitose()
         {
             youtubeService = new YouTubeService(new BaseClientService.Initializer() { ApiKey = "AIzaSyCiwm6X53K2uXqGfGBVY1RSfp25U7h-wp8", ApplicationName = GetType().Name });
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
             Random random = new Random();
 
-            //Reddit Variables 
+            //Reddit Variables
             var reddit = new Reddit();
             var reddituser = reddit.LogIn("absoIutelumi", "jackson1");
-
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
-
+            
+            //Client Setup
             client = new DiscordClient(input =>
             {
                 input.LogLevel = LogSeverity.Info;
@@ -62,10 +62,12 @@ namespace ChitoseV2
                 x.Mode = AudioMode.Outgoing;
             });
 
+            //Services
             commands = client.GetService<CommandService>();
 
             audio = client.GetService<AudioService>();
 
+            //Chitose Picture Response
             System.IO.StreamReader filereader = new System.IO.StreamReader(ConfigDirectory + "Chitose.txt");
             string line = filereader.ReadLine();
             while (line != null)
@@ -84,6 +86,8 @@ namespace ChitoseV2
 
             Console.Clear();
 
+
+            //Server Updates
             client.UserJoined += async (s, e) =>
             {
                 var channel = e.Server.FindChannels("announcements").FirstOrDefault();
@@ -185,7 +189,7 @@ namespace ChitoseV2
             commands.CreateCommand("pause").Do((e) =>
             {
                 Process process = new Process();
-                process.Close(); 
+                process.Close();
             });
 
             commands.CreateCommand("resume").Do((e) =>
@@ -250,7 +254,7 @@ namespace ChitoseV2
                 float value = float.Parse(e.GetArg("volume"));
                 if (value >= 0 && value <= 1)
                 {
-                    lock(VolumeLock)
+                    lock (VolumeLock)
                     {
                         volume = value;
                     }
@@ -267,11 +271,11 @@ namespace ChitoseV2
                     string jsonResult = new StreamReader(response).ReadToEnd();
                     JishoResponse result = json.Deserialize<JishoResponse>(jsonResult);
                     StringBuilder message = new StringBuilder();
-                    for(int i = 0; i < Math.Min(5, result.data.Length); i++)
+                    for (int i = 0; i < Math.Min(5, result.data.Length); i++)
                     {
                         JishoResponse.Result word = result.data[i];
                         message.AppendLine("```");
-                        message.AppendLine(word.is_common ? "Common": "Uncommon");
+                        message.AppendLine(word.is_common ? "Common" : "Uncommon");
                         message.AppendLine("Japanese Translations:");
                         message.AppendLine("\t" + string.Join(", ", word.japanese.Select(o => o.word == null ? o.reading : o.word + " (" + o.reading + ")")));
                         message.AppendLine("English Translations:");
@@ -300,19 +304,20 @@ namespace ChitoseV2
             {
                 string[] arg = e.Args;
                 string url = DanbooruService.GetRandomImage(arg);
-                 
 
                 using (WebClient client = new WebClient())
                 {
-                    client.DownloadFile(new Uri(url), TempDirectory + arg + "booru.png");
+                    client.DownloadFile(new Uri(url), TempDirectory + arg.ToString() + "booru.png");
                 }
 
-                await e.Channel.SendFile(TempDirectory + arg + "booru.png");
+                await e.Channel.SendFile(TempDirectory + arg.ToString() + "booru.png");
             });
 
             client.ExecuteAndWait(async () =>
             {
                 await client.Connect("MjY1MzU3OTQwNDU2Njg1NTc5.C08iSQ.0JuccBwAn2mYftmvgNdygJyIK-w", TokenType.Bot);
+
+                client.SetGame("with lolis～"); 
             });
         }
 
@@ -325,35 +330,38 @@ namespace ChitoseV2
                     public string word;
                     public string reading;
                 }
+
                 public class Details
                 {
                     public string[] english_definitions;
                     public string[] parts_of_speech;
                 }
+
                 public bool is_common;
                 public string[] tags;
                 public Japanese[] japanese;
                 public Details[] senses;
             }
+
             public Result[] data;
         }
 
         public void SendAudio(string filePath)
         {
-                lock (AudioStatusLock)
-                {
-                    audioStatus = AudioStatus.Playing;
-                    Console.WriteLine("Audio Starting");
-                }
-                var channelCount = client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
-                var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
-                using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
-                using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
-                {
-                    resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
-                    int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
-                    byte[] buffer = new byte[blockSize];
-                    int byteCount;
+            lock (AudioStatusLock)
+            {
+                audioStatus = AudioStatus.Playing;
+                Console.WriteLine("Audio Starting");
+            }
+            var channelCount = client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
+            var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
+            using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
+            using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
+            {
+                resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
+                int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
+                byte[] buffer = new byte[blockSize];
+                int byteCount;
 
                 while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0) // Read audio into our buffer, and keep a loop open while data is present
                 {
@@ -372,7 +380,7 @@ namespace ChitoseV2
                         for (int i = byteCount; i < blockSize; i++)
                             buffer[i] = 0;
                     }
-                    for(int i = 0; i < buffer.Length; i += 2)
+                    for (int i = 0; i < buffer.Length; i += 2)
                     {
                         short sample = (short)(buffer[i] | (buffer[i + 1] << 8));
                         lock (VolumeLock)
