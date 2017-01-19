@@ -3,6 +3,7 @@ using Discord.Audio;
 using Discord.Commands;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
+using Mayushii.Services;
 using NAudio.Wave;
 using RedditSharp;
 using System;
@@ -283,32 +284,31 @@ namespace ChitoseV2
 
             //Pictures
 
-            client.GetService<CommandService>().CreateGroup("reddit", cgb =>
+            commands.CreateCommand("reddit").Parameter("subreddit").Do(async (e) =>
             {
-                cgb.CreateCommand("hot").Parameter("subreddit").Do(async (e) =>
+                var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
+                int indexer = random.Next(100);
+
+                var postlist = subreddit.Hot.Take(100);
+                var post = postlist.ToList()[indexer];
+                string posturl = post.Url.ToString();
+
+                await e.Channel.SendMessage(posturl);
+            });
+
+            commands.CreateCommand("show").Parameter("keyword", ParameterType.Multiple).Do(async (e) =>
+            {
+                string[] arg = e.Args;
+                string url = DanbooruService.GetRandomImage(arg);
+                 
+
+                using (WebClient client = new WebClient())
                 {
-                    var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
-                    int indexer = random.Next(25);
+                    client.DownloadFile(new Uri(url), TempDirectory + arg + "booru.png");
+                }
 
-                    var postlist = subreddit.Hot.Take(25);
-                    var post = postlist.ToList()[indexer];
-                    string posturl = post.Url.ToString();
-
-                    await e.Channel.SendMessage(posturl);
-                });
-
-                cgb.CreateCommand("new").Parameter("subreddit").Do(async (e) =>
-                {
-                    var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
-                    int indexer = random.Next(25);
-
-                    var postlist = subreddit.New.Take(25);
-                    var post = postlist.ToList()[indexer];
-                    string posturl = post.Url.ToString();
-
-                    await e.Channel.SendMessage(posturl);
-                });
-            }); 
+                await e.Channel.SendFile(TempDirectory + arg + "booru.png");
+            });
 
             client.ExecuteAndWait(async () =>
             {
