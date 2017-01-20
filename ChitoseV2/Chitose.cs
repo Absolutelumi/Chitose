@@ -27,7 +27,7 @@ namespace ChitoseV2
         private AudioService audio;
         private AudioStatus audioStatus = AudioStatus.Stopped;
         private object AudioStatusLock = new object();
-        private float volume = 1.0f;
+        private float volume = 0.5f;
         private object VolumeLock = new object();
         private DiscordClient client;
         private CommandService commands;
@@ -252,8 +252,10 @@ namespace ChitoseV2
             commands.CreateCommand("volume").Parameter("volume").Do((e) =>
             {
                 float value = float.Parse(e.GetArg("volume"));
-                if (value >= 0 && value <= 1)
+                if (value >= 0 && value <= 100)
                 {
+                    value = value / 100.0f; 
+
                     lock (VolumeLock)
                     {
                         volume = value;
@@ -304,13 +306,16 @@ namespace ChitoseV2
             {
                 string[] arg = e.Args;
                 string url = DanbooruService.GetRandomImage(arg);
+                string temppath = TempDirectory + arg.ToString() + "booru.png"; 
 
                 using (WebClient client = new WebClient())
                 {
-                    client.DownloadFile(new Uri(url), TempDirectory + arg.ToString() + "booru.png");
+                    client.DownloadFile(new Uri(url), temppath);
                 }
 
-                await e.Channel.SendFile(TempDirectory + arg.ToString() + "booru.png");
+                await e.Channel.SendFile(temppath);
+
+                File.Delete(temppath);
             });
 
             client.ExecuteAndWait(async () =>
