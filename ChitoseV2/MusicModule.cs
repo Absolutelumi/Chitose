@@ -19,7 +19,7 @@ namespace ChitoseV2
 
         private static readonly YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
         {
-            ApiKey = new StreamReader(File.OpenRead(Chitose.ConfigDirectory + "youtube.txt")).ReadToEnd(),
+            ApiKey = File.OpenRead(Chitose.ConfigDirectory + "youtube.txt").ReadString(),
             ApplicationName = "Chitose V2"
         });
 

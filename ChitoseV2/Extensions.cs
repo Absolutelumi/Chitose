@@ -17,5 +17,10 @@ namespace ChitoseV2
         {
             return Path.GetInvalidFileNameChars().Aggregate(filename, (current, c) => current.Replace(c.ToString(), string.Empty));
         }
+
+        public static string ReadString(this Stream stream)
+        {
+            return new StreamReader(stream).ReadToEnd();
+        }
     }
 }
