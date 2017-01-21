@@ -23,7 +23,7 @@ namespace Mayushii.Services
             Post[] posts = GetPosts(arg).Where(post => post.ImageUrl != null).ToArray();
             if (posts.Length > 0)
             {
-                return posts[random.Next(0, posts.Length)].ImageUrl;
+                return posts.Random().ImageUrl;
             }
             else
             {

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Discord;
-using Discord.Audio;
+﻿using Discord;
 using Discord.Commands;
-using Discord.API.Client;
+using System.Linq;
 
 namespace ChitoseV2
 {
@@ -61,4 +55,3 @@ namespace ChitoseV2
         }
     }
 }
-

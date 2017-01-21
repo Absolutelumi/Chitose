@@ -1,12 +1,8 @@
 ﻿using Discord;
 using Discord.Commands;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChitoseV2
 {
@@ -42,13 +38,6 @@ namespace ChitoseV2
                 await e.Channel.SendFile(Chitose.TempDirectory + e.GetArg("user") + "Signature.png");
 
                 File.Delete(Chitose.TempDirectory + e.GetArg("user") + "Signature.png");
-            });
-
-            commands.CreateCommand("help").Do(async (e) =>
-            {
-                await e.Channel.SendMessage(string.Format("```{0}Prefix : '>' \n Chitose reaction picture commands : \n angry  - happy - thinking \n disappointed - annoyed - hopeful \n shocked```", e.User.Mention));
-
-                await e.Channel.SendMessage("```Commands : 'myrole' , 'myav' , 'osu (user)' ```");
             });
         }
     }
