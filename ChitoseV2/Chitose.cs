@@ -38,7 +38,7 @@ namespace ChitoseV2
 
         public Chitose()
         {
-            youtubeService = new YouTubeService(new BaseClientService.Initializer() { ApiKey = "AIzaSyCiwm6X53K2uXqGfGBVY1RSfp25U7h-wp8", ApplicationName = GetType().Name });
+            youtubeService = new YouTubeService(new BaseClientService.Initializer() { ApiKey = new StreamReader(File.OpenRead(ConfigDirectory + "youtube.txt")).ReadToEnd(), ApplicationName = GetType().Name });
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
             Random random = new Random();
 
@@ -364,7 +364,7 @@ namespace ChitoseV2
 
             client.ExecuteAndWait(async () =>
             {
-                await client.Connect("MjY1MzU3OTQwNDU2Njg1NTc5.C08iSQ.0JuccBwAn2mYftmvgNdygJyIK-w", TokenType.Bot);
+                await client.Connect(new StreamReader(File.OpenRead(ConfigDirectory + "token.txt")).ReadToEnd(), TokenType.Bot);
 
                 client.SetGame("with lolis～"); 
             });
