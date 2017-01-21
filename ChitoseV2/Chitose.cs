@@ -27,6 +27,7 @@ namespace ChitoseV2
         private MusicModule music;
         private float volume = 0.5f;
         private object VolumeLock = new object();
+        private char prefix = '!'; 
 
         public Chitose()
         {
@@ -34,8 +35,7 @@ namespace ChitoseV2
             Random random = new Random();
 
             //Reddit Variables
-            var reddit = new Reddit();
-            var reddituser = reddit.LogIn("absoIutelumi", "jackson1");
+            var reddit = new Reddit(); 
 
             //Client Setup
             client = new DiscordClient(input =>
@@ -46,7 +46,7 @@ namespace ChitoseV2
 
             client.UsingCommands(input =>
             {
-                input.PrefixChar = '!';
+                input.PrefixChar = prefix;
                 input.AllowMentionPrefix = true;
                 input.HelpMode = HelpMode.Public;
             });
