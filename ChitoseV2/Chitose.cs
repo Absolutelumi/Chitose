@@ -1,15 +1,13 @@
 ﻿using Discord;
 using Discord.Audio;
 using Discord.Commands;
-using Mayushii.Services;
 using NAudio.Wave;
 using RedditSharp;
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Web.Script.Serialization;
 
 namespace ChitoseV2
@@ -50,6 +48,7 @@ namespace ChitoseV2
             {
                 input.PrefixChar = '!';
                 input.AllowMentionPrefix = true;
+                input.HelpMode = HelpMode.Public;
             });
 
             client.UsingAudio(x =>
@@ -68,8 +67,14 @@ namespace ChitoseV2
                 await client.FindServers("Too Too Roo").FirstOrDefault().TextChannels.Where(channel => channel.Name == "music").FirstOrDefault().SendMessage("Now playing " + (title ?? "nothing"));
             };
 
+            List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music) };
+
+            commandSets.ForEach(set => set.AddCommands(client, commands));
+
+            // Move below commands into command sets
+            /*
             //Chitose Picture Response
-            System.IO.StreamReader filereader = new System.IO.StreamReader(ConfigDirectory + "Chitose.txt");
+            System.IO.StreamReader filereader = new System.IO.StreamReader(Chitose.ConfigDirectory + "Chitose.txt");
             string line = filereader.ReadLine();
             while (line != null)
             {
@@ -150,7 +155,7 @@ namespace ChitoseV2
             {
                 using (WebClient client = new WebClient())
                 {
-                    client.DownloadFile(new Uri(string.Format("https://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user"))), TempDirectory + e.GetArg("user") + "Signature.png");
+                    client.DownloadFile(new Uri(string.Format("https://lemmmy.pw/osusig/sig.php?colour=pink&uname={0}&pp=1&countryrank", e.GetArg("user"))), Chitose.TempDirectory + e.GetArg("user") + "Signature.png");
                 }
 
                 await e.Channel.SendFile(TempDirectory + e.GetArg("user") + "Signature.png");
@@ -166,173 +171,6 @@ namespace ChitoseV2
             });
 
             // Music
-
-            commands.CreateGroup("music", cgb =>
-            {
-                cgb.CreateCommand("add").Parameter("song", ParameterType.Multiple).Do(async (e) =>
-                {
-                    string title = await music.AddToQueue(e.Args);
-                    if (title != null)
-                    {
-                        await e.Channel.SendMessage("Added " + title + " to queue");
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("Couldn't find videos");
-                    }
-                });
-
-                cgb.CreateCommand("clear").Do(async (e) =>
-                {
-                    music.ClearQueue();
-                    await e.Channel.SendMessage("Queue cleared");
-                });
-
-                cgb.CreateCommand("skip").Do(async (e) =>
-                {
-                    bool success = music.Skip();
-                    await e.Channel.SendMessage(success ? "Song skipped" : "No song playing");
-                });
-
-                cgb.CreateCommand("queue").Do(async (e) =>
-                {
-                    string[] queue = music.GetQueue();
-                    StringBuilder builder = new StringBuilder();
-                    builder.AppendLine("Queue:");
-                    builder.AppendLine("```");
-                    for (int i = 0; i < queue.Length; i++)
-                    {
-                        builder.AppendLine((i + 1) + ": " + queue[i]);
-                    }
-                    builder.AppendLine("```");
-                    await e.Channel.SendMessage(builder.ToString());
-                });
-
-                cgb.CreateCommand("next").Parameter("index").Do(async (e) =>
-                {
-                    int index = -1;
-                    bool success = int.TryParse(e.GetArg("index"), out index);
-                    string title = music.MoveToTopOfQueue(index);
-                    if (!success || title == null)
-                    {
-                        await e.Channel.SendMessage("Please enter a valid number in the queue");
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("Moved " + title + " to the top of the queue");
-                    }
-                });
-
-                cgb.CreateCommand("remove").Parameter("index").Do(async (e) =>
-                {
-                    int index = -1;
-                    bool success = int.TryParse(e.GetArg("index"), out index);
-                    string title = music.RemoveFromQueue(index);
-                    if (!success || title == null)
-                    {
-                        await e.Channel.SendMessage("Please enter a valid number in the queue");
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("Removed " + title);
-                    }
-                });
-
-                cgb.CreateCommand("play").Do(async (e) =>
-                {
-                    bool success = music.StartPlaying();
-                    if (success)
-                    {
-                        await e.Channel.SendMessage("Started playing");
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("Already playing or not in room");
-                    }
-                });
-
-                cgb.CreateCommand("stop").Do(async (e) =>
-                {
-                    bool success = music.StopPlaying();
-                    if (success)
-                    {
-                        await e.Channel.SendMessage("Stopped playing");
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("Already stopped");
-                    }
-                });
-
-                cgb.CreateCommand("pause").Do(async (e) =>
-                {
-                    if (!music.SetPause(true))
-                    {
-                        await e.Channel.SendMessage("Already paused");
-                    }
-                });
-
-                cgb.CreateCommand("resume").Do(async (e) =>
-                {
-                    if (!music.SetPause(false))
-                    {
-                        await e.Channel.SendMessage("Not paused");
-                    }
-                });
-
-                cgb.CreateCommand("join").Parameter("channel").Do(async (e) =>
-                {
-                    var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
-                    if (voiceChannel == null)
-                    {
-                        await e.Channel.SendMessage(e.GetArg("channel") + " does not exist!");
-                        return;
-                    }
-                    if (voiceChannel.Users.Count() != 0)
-                    {
-                        bool success = await music.ConnectTo(voiceChannel);
-                        if (success)
-                        {
-                            await e.Channel.SendMessage("Joined " + voiceChannel.Name);
-                        }
-                        else
-                        {
-                            await e.Channel.SendMessage("Already in " + voiceChannel.Name);
-                        }
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("I am not going to an empty room!");
-                    }
-                });
-
-                cgb.CreateCommand("leave").Do(async (e) =>
-                {
-                    bool success = music.Leave();
-                    if (success)
-                    {
-                        await e.Channel.SendMessage("Left");
-                    }
-                    else
-                    {
-                        await e.Channel.SendMessage("Not in a channel");
-                    }
-                });
-
-                cgb.CreateCommand("volume").Parameter("volume").Do(async (e) =>
-                {
-                    float value;
-                    bool success = float.TryParse(e.GetArg("volume"), out value);
-                    if (!success || value < 0.0f || value > 100.0f)
-                    {
-                        await e.Channel.SendMessage("Please enter a number between 0 and 100");
-                    }
-                    else
-                    {
-                        music.Volume = value / 100.0f;
-                    }
-                });
-            });
 
             commands.CreateCommand("playfile").Do(async (e) =>
             {
@@ -394,7 +232,7 @@ namespace ChitoseV2
             {
                 string[] arg = e.Args;
                 string url = DanbooruService.GetRandomImage(arg);
-                string temppath = TempDirectory + arg.ToString() + "booru.png";
+                string temppath = Chitose.TempDirectory + arg.ToString() + "booru.png";
 
                 using (WebClient client = new WebClient())
                 {
@@ -405,6 +243,7 @@ namespace ChitoseV2
 
                 File.Delete(temppath);
             });
+            */
 
             client.ExecuteAndWait(async () =>
             {
@@ -412,11 +251,6 @@ namespace ChitoseV2
 
                 client.SetGame("with lolis～");
             });
-        }
-
-        public static string CleanFileName(string fileName)
-        {
-            return Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
         }
 
         public void SendAudio(string filePath)
@@ -475,6 +309,8 @@ namespace ChitoseV2
 
         private enum AudioStatus { Stopped, Stopping, Playing };
 
+#pragma warning disable 0649
+
         public class JishoResponse
         {
             public Result[] data;
@@ -502,5 +338,7 @@ namespace ChitoseV2
                 }
             }
         }
+
+#pragma warning restore 0649
     }
 }

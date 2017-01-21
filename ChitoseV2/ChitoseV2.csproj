@@ -140,7 +140,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Chitose.cs" />
+    <Compile Include="CommandSet.cs" />
     <Compile Include="DanbooruService.cs" />
+    <Compile Include="MusicCommands.cs" />
     <Compile Include="MusicModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
