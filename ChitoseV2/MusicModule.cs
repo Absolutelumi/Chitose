@@ -3,6 +3,7 @@ using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
 using Google.Apis.YouTube.v3.Data;
 using NAudio.Wave;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -350,7 +351,11 @@ namespace ChitoseV2
                             buffer[i] = (byte)(result & 0xFF);
                             buffer[i + 1] = (byte)(result >> 8);
                         }
-                        client.Send(Paused ? silence : buffer, 0, blockSize); // Send the buffer to Discord
+                        try
+                        {
+                            client.Send(Paused ? silence : buffer, 0, blockSize); // Send the buffer to Discord
+                        }
+                        catch (Exception) { }
                         if (!Paused)
                         {
                             byteCount = resampler.Read(buffer, 0, blockSize);

@@ -327,7 +327,10 @@ namespace ChitoseV2
                     {
                         await e.Channel.SendMessage("Please enter a number between 0 and 100");
                     }
-                    music.Volume = value / 100.0f;
+                    else
+                    {
+                        music.Volume = value / 100.0f;
+                    }
                 });
             });
 
