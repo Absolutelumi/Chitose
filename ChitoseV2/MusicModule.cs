@@ -40,92 +40,32 @@ namespace ChitoseV2
 
         public float Volume
         {
-            get
-            {
-                lock (volumeLock)
-                {
-                    return volume;
-                }
-            }
-            set
-            {
-                lock (volumeLock)
-                {
-                    volume = value;
-                }
-            }
+            get { lock (volumeLock) { return volume; } }
+            set { lock (volumeLock) { volume = value; } }
         }
 
         private IAudioClient Client
         {
-            get
-            {
-                lock (clientLock)
-                {
-                    return client;
-                }
-            }
-            set
-            {
-                lock (clientLock)
-                {
-                    client = value;
-                }
-            }
+            get { lock (clientLock) { return client; } }
+            set { lock (clientLock) { client = value; } }
         }
 
         private AudioState CurrentState
         {
-            get
-            {
-                lock (currentStateLock)
-                {
-                    return currentState;
-                }
-            }
-            set
-            {
-                lock (currentStateLock)
-                {
-                    currentState = value;
-                }
-            }
+            get { lock (currentStateLock) { return currentState; } }
+            set { lock (currentStateLock) { currentState = value; } }
         }
 
         private bool Paused
         {
-            get
-            {
-                lock (pausedLock)
-                {
-                    return paused;
-                }
-            }
-            set
-            {
-                lock (pausedLock)
-                {
-                    paused = value;
-                }
-            }
+            get { lock (pausedLock) { return paused; } }
+            set { lock (pausedLock) { paused = value; } }
         }
 
         private bool RequestStop
         {
-            get
-            {
-                lock (requestStopLock)
-                {
-                    return requestStop;
-                }
-            }
-            set
-            {
-                lock (requestStopLock)
-                {
-                    requestStop = value;
-                }
-            }
+            get { lock (requestStopLock) { return requestStop; } }
+            set { lock (requestStopLock) { requestStop = value; } }
         }
 
         public MusicModule(AudioService audioService)
@@ -141,19 +81,14 @@ namespace ChitoseV2
         public async Task<string> AddToQueue(IEnumerable<string> searchTerms)
         {
             SearchResult bestResult = await GetBestResult(searchTerms);
-            if (bestResult != null)
-            {
-                queue.Add(new Song() { Title = bestResult.Snippet.Title, Url = $"https://www.youtube.com/watch?v={bestResult.Id.VideoId}" });
-                if (queue.Count == 1 && CurrentState == AudioState.Playing && currentSong == null)
-                {
-                    PlayNext();
-                }
-                return bestResult.Snippet.Title;
-            }
-            else
-            {
+            if (bestResult == null)
                 return null;
+            queue.Add(new Song() { Title = bestResult.Snippet.Title, Url = $"https://www.youtube.com/watch?v={bestResult.Id.VideoId}" });
+            if (queue.Count == 1 && CurrentState == AudioState.Playing && currentSong == null)
+            {
+                PlayNext();
             }
+            return bestResult.Snippet.Title;
         }
 
         public void ClearQueue()
@@ -168,10 +103,7 @@ namespace ChitoseV2
                 Client = await service.Join(voiceChannel);
                 return true;
             }
-            else
-            {
-                return false;
-            }
+            return false;
         }
 
         public string[] GetQueue()
@@ -181,63 +113,45 @@ namespace ChitoseV2
 
         public bool Leave()
         {
-            if (Client != null)
-            {
-                StopPlaying();
-                service.Leave(Client.Channel);
-                Client = null;
-                return true;
-            }
-            else
-            {
+            if (Client == null)
                 return false;
-            }
+            StopPlaying();
+            service.Leave(Client.Channel);
+            Client = null;
+            return true;
         }
 
         public string MoveToTopOfQueue(int index)
         {
-            if (index >= 1 && index <= queue.Count)
-            {
-                Song temp = queue[index - 1];
-                queue[index - 1] = queue[0];
-                queue[0] = temp;
-                return queue[0].Title;
-            }
-            else
-            {
+            if (index < 1 || index > queue.Count)
                 return null;
-            }
+            Song temp = queue[index - 1];
+            queue[index - 1] = queue[0];
+            queue[0] = temp;
+            return queue[0].Title;
         }
 
         public bool PlayNext()
         {
             Paused = false;
-            if (queue.Count != 0)
-            {
-                AcquireAndPlay(queue[0]);
-                OnSongChanged(queue[0].Title);
-                queue.RemoveAt(0);
-                return true;
-            }
-            else
+            if (queue.Count == 0)
             {
                 OnSongChanged(null);
                 return false;
             }
+            AcquireAndPlay(queue[0]);
+            OnSongChanged(queue[0].Title);
+            queue.RemoveAt(0);
+            return true;
         }
 
         public string RemoveFromQueue(int index)
         {
-            if (index >= 1 && index <= queue.Count)
-            {
-                string title = queue[index - 1].Title;
-                queue.RemoveAt(index - 1);
-                return title;
-            }
-            else
-            {
+            if (index < 1 || index > queue.Count)
                 return null;
-            }
+            string title = queue[index - 1].Title;
+            queue.RemoveAt(index - 1);
+            return title;
         }
 
         public bool SetPause(bool pause)
@@ -249,48 +163,29 @@ namespace ChitoseV2
 
         public bool Skip()
         {
-            if (currentSong != null)
-            {
-                RequestStop = true;
-                Paused = false;
-                return true;
-            }
-            else
-            {
+            if (currentSong == null)
                 return false;
-            }
+            RequestStop = true;
+            Paused = false;
+            return true;
         }
 
         public bool StartPlaying()
         {
-            if (Client == null)
-            {
+            if (Client == null || CurrentState == AudioState.Stopped)
                 return false;
-            }
-            if (CurrentState != AudioState.Playing)
-            {
-                CurrentState = AudioState.Playing;
-                PlayNext();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            CurrentState = AudioState.Playing;
+            PlayNext();
+            return true;
         }
 
         public bool StopPlaying()
         {
-            if (CurrentState != AudioState.Stopped)
-            {
-                RequestStop = true;
-                CurrentState = AudioState.Stopped;
-                return true;
-            }
-            else
-            {
+            if (CurrentState == AudioState.Stopped)
                 return false;
-            }
+            RequestStop = true;
+            CurrentState = AudioState.Stopped;
+            return true;
         }
 
         private void AcquireAndPlay(Song song)
