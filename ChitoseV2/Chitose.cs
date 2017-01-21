@@ -1,51 +1,44 @@
 ﻿using Discord;
 using Discord.Audio;
 using Discord.Commands;
-using Google.Apis.Services;
-using Google.Apis.YouTube.v3;
 using Mayushii.Services;
 using NAudio.Wave;
 using RedditSharp;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web.Script.Serialization;
-using YoutubeExtractor;
 
 namespace ChitoseV2
 {
     internal class Chitose
     {
-        private static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
-        private static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
-        private static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
+        public static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
+        public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
+        public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
+        private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
         private IAudioClient _vClient;
         private AudioService audio;
         private AudioStatus audioStatus = AudioStatus.Stopped;
         private object AudioStatusLock = new object();
-        private float volume = 0.5f;
-        private object VolumeLock = new object();
         private DiscordClient client;
         private CommandService commands;
-        private YouTubeService youtubeService;
-        private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
-        private bool paused = false;
-        private object pauselock = new object(); 
+        private MusicModule music;
+        private float volume = 0.5f;
+        private object VolumeLock = new object();
 
         public Chitose()
         {
-            youtubeService = new YouTubeService(new BaseClientService.Initializer() { ApiKey = new StreamReader(File.OpenRead(ConfigDirectory + "youtube.txt")).ReadToEnd(), ApplicationName = GetType().Name });
             ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
             Random random = new Random();
 
             //Reddit Variables
             var reddit = new Reddit();
             var reddituser = reddit.LogIn("absoIutelumi", "jackson1");
-            
+
             //Client Setup
             client = new DiscordClient(input =>
             {
@@ -62,12 +55,18 @@ namespace ChitoseV2
             client.UsingAudio(x =>
             {
                 x.Mode = AudioMode.Outgoing;
-            });  
+            });
 
             //Services
             commands = client.GetService<CommandService>();
 
             audio = client.GetService<AudioService>();
+
+            music = new MusicModule(audio);
+            music.OnSongChanged += async (title) =>
+            {
+                await client.FindServers("Too Too Roo").FirstOrDefault().TextChannels.Where(channel => channel.Name == "music").FirstOrDefault().SendMessage("Now playing " + (title ?? "nothing"));
+            };
 
             //Chitose Picture Response
             System.IO.StreamReader filereader = new System.IO.StreamReader(ConfigDirectory + "Chitose.txt");
@@ -87,7 +86,6 @@ namespace ChitoseV2
             }
 
             Console.Clear();
-
 
             //Server Updates
             client.UserJoined += async (s, e) =>
@@ -169,111 +167,168 @@ namespace ChitoseV2
 
             // Music
 
-            commands.CreateCommand("join").Parameter("channel").Do(async (e) =>
+            commands.CreateGroup("music", cgb =>
             {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
-                if (voiceChannel.Users.Count() != 0)
+                cgb.CreateCommand("add").Parameter("song", ParameterType.Multiple).Do(async (e) =>
                 {
-                    _vClient = await audio.Join(voiceChannel);
-                    await e.Channel.SendMessage("Joined " + voiceChannel.ToString()); 
-                }
-                else
-                {
-                    await e.Channel.SendMessage("I am not going to an empty room!");
-                }
-            });
-
-            commands.CreateCommand("leave").Do(async (e) =>
-            {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
-
-                await audio.Leave(voiceChannel);
-
-                await e.Channel.SendMessage("Left " + voiceChannel.ToString()); 
-            });
-
-            commands.CreateCommand("pause").Do(async (e) =>
-            {
-                if(audioStatus == AudioStatus.Playing)
-                {
-                    lock (pauselock)
+                    string title = await music.AddToQueue(e.Args);
+                    if (title != null)
                     {
-                        paused = true;
+                        await e.Channel.SendMessage("Added " + title + " to queue");
                     }
-                }
-                else
-                {
-                    await e.Channel.SendMessage("Nothing is playing...");
-                }
-            });
-
-            commands.CreateCommand("play").Parameter("song", ParameterType.Multiple).Do(async (e) =>
-            {
-                if(audioStatus == AudioStatus.Playing)
-                {
-                    if(paused == true)
-                    {
-                        paused = false; 
-                    }
-
                     else
                     {
-
+                        await e.Channel.SendMessage("Couldn't find videos");
                     }
-                }
-                else
+                });
+
+                cgb.CreateCommand("clear").Do(async (e) =>
                 {
-                    if (_vClient != null)
-                    {
-                        if (audioStatus == AudioStatus.Playing)
-                        {
-                            lock (AudioStatusLock)
-                            {
-                                audioStatus = AudioStatus.Stopping;
-                                Console.WriteLine("Audio Stop Requested");
-                            }
-                        }
+                    music.ClearQueue();
+                    await e.Channel.SendMessage("Queue cleared");
+                });
 
-                        var searchRequest = youtubeService.Search.List("snippet");
-                        searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
-                        searchRequest.Q = string.Join("+", e.Args);
-                        searchRequest.MaxResults = 25;
-                        var response = await searchRequest.ExecuteAsync();
-                        var result = response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
-                        if (result != null)
+                cgb.CreateCommand("skip").Do(async (e) =>
+                {
+                    bool success = music.Skip();
+                    await e.Channel.SendMessage(success ? "Song skipped" : "No song playing");
+                });
+
+                cgb.CreateCommand("queue").Do(async (e) =>
+                {
+                    string[] queue = music.GetQueue();
+                    StringBuilder builder = new StringBuilder();
+                    builder.AppendLine("Queue:");
+                    builder.AppendLine("```");
+                    for (int i = 0; i < queue.Length; i++)
+                    {
+                        builder.AppendLine((i + 1) + ": " + queue[i]);
+                    }
+                    builder.AppendLine("```");
+                    await e.Channel.SendMessage(builder.ToString());
+                });
+
+                cgb.CreateCommand("next").Parameter("index").Do(async (e) =>
+                {
+                    int index = -1;
+                    bool success = int.TryParse(e.GetArg("index"), out index);
+                    string title = music.MoveToTopOfQueue(index);
+                    if (!success || title == null)
+                    {
+                        await e.Channel.SendMessage("Please enter a valid number in the queue");
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("Moved " + title + " to the top of the queue");
+                    }
+                });
+
+                cgb.CreateCommand("remove").Parameter("index").Do(async (e) =>
+                {
+                    int index = -1;
+                    bool success = int.TryParse(e.GetArg("index"), out index);
+                    string title = music.RemoveFromQueue(index);
+                    if (!success || title == null)
+                    {
+                        await e.Channel.SendMessage("Please enter a valid number in the queue");
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("Removed " + title);
+                    }
+                });
+
+                cgb.CreateCommand("play").Do(async (e) =>
+                {
+                    bool success = music.StartPlaying();
+                    if (success)
+                    {
+                        await e.Channel.SendMessage("Started playing");
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("Already playing or not in room");
+                    }
+                });
+
+                cgb.CreateCommand("stop").Do(async (e) =>
+                {
+                    bool success = music.StopPlaying();
+                    if (success)
+                    {
+                        await e.Channel.SendMessage("Stopped playing");
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("Already stopped");
+                    }
+                });
+
+                cgb.CreateCommand("pause").Do(async (e) =>
+                {
+                    if (!music.SetPause(true))
+                    {
+                        await e.Channel.SendMessage("Already paused");
+                    }
+                });
+
+                cgb.CreateCommand("resume").Do(async (e) =>
+                {
+                    if (!music.SetPause(false))
+                    {
+                        await e.Channel.SendMessage("Not paused");
+                    }
+                });
+
+                cgb.CreateCommand("join").Parameter("channel").Do(async (e) =>
+                {
+                    var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
+                    if (voiceChannel == null)
+                    {
+                        await e.Channel.SendMessage(e.GetArg("channel") + " does not exist!");
+                        return;
+                    }
+                    if (voiceChannel.Users.Count() != 0)
+                    {
+                        bool success = await music.ConnectTo(voiceChannel);
+                        if (success)
                         {
-                            string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
-                            await e.Channel.SendMessage("Playing " + link);
-                            IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
-                            VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
-                            if (video != null)
-                            {
-                                if (video.RequiresDecryption)
-                                {
-                                    DownloadUrlResolver.DecryptDownloadUrl(video);
-                                }
-                                string videoFile = TempDirectory + CleanFileName(video.Title + video.VideoExtension);
-                                string audioFile = TempDirectory + CleanFileName(video.Title + ".mp3");
-                                var videoDownloader = new VideoDownloader(video, videoFile);
-                                videoDownloader.Execute();
-                                File.Delete(audioFile);
-                                Process process = new Process();
-                                process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
-                                process.StartInfo.RedirectStandardOutput = true;
-                                process.StartInfo.RedirectStandardError = true;
-                                process.StartInfo.Arguments = $"-i \"{videoFile}\" \"{audioFile}\"";
-                                process.StartInfo.UseShellExecute = false;
-                                process.StartInfo.CreateNoWindow = true;
-                                process.Start();
-                                process.WaitForExit();
-                                process.Close();
-                                SendAudio(audioFile);
-                                File.Delete(audioFile);
-                                File.Delete(videoFile);
-                            }
+                            await e.Channel.SendMessage("Joined " + voiceChannel.Name);
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("Already in " + voiceChannel.Name);
                         }
                     }
-                }
+                    else
+                    {
+                        await e.Channel.SendMessage("I am not going to an empty room!");
+                    }
+                });
+
+                cgb.CreateCommand("leave").Do(async (e) =>
+                {
+                    bool success = music.Leave();
+                    if (success)
+                    {
+                        await e.Channel.SendMessage("Left");
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage("Not in a channel");
+                    }
+                });
+
+                cgb.CreateCommand("volume").Parameter("volume").Do(async (e) =>
+                {
+                    float value;
+                    bool success = float.TryParse(e.GetArg("volume"), out value);
+                    if (!success || value < 0.0f || value > 100.0f)
+                    {
+                        await e.Channel.SendMessage("Please enter a number between 0 and 100");
+                    }
+                    music.Volume = value / 100.0f;
+                });
             });
 
             commands.CreateCommand("playfile").Do(async (e) =>
@@ -291,20 +346,6 @@ namespace ChitoseV2
                 process.WaitForExit();
                 process.Close();
                 SendAudio(audioFile);
-            });
-
-            commands.CreateCommand("volume").Parameter("volume").Do((e) =>
-            {
-                float value = float.Parse(e.GetArg("volume"));
-                if (value >= 0 && value <= 100)
-                {
-                    value = value / 100.0f; 
-
-                    lock (VolumeLock)
-                    {
-                        volume = value;
-                    }
-                }
             });
 
             //Japanese
@@ -350,7 +391,7 @@ namespace ChitoseV2
             {
                 string[] arg = e.Args;
                 string url = DanbooruService.GetRandomImage(arg);
-                string temppath = TempDirectory + arg.ToString() + "booru.png"; 
+                string temppath = TempDirectory + arg.ToString() + "booru.png";
 
                 using (WebClient client = new WebClient())
                 {
@@ -366,33 +407,13 @@ namespace ChitoseV2
             {
                 await client.Connect(new StreamReader(File.OpenRead(ConfigDirectory + "token.txt")).ReadToEnd(), TokenType.Bot);
 
-                client.SetGame("with lolis～"); 
+                client.SetGame("with lolis～");
             });
         }
 
-        public class JishoResponse
+        public static string CleanFileName(string fileName)
         {
-            public class Result
-            {
-                public class Japanese
-                {
-                    public string word;
-                    public string reading;
-                }
-
-                public class Details
-                {
-                    public string[] english_definitions;
-                    public string[] parts_of_speech;
-                }
-
-                public bool is_common;
-                public string[] tags;
-                public Japanese[] japanese;
-                public Details[] senses;
-            }
-
-            public Result[] data;
+            return Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
         }
 
         public void SendAudio(string filePath)
@@ -439,20 +460,9 @@ namespace ChitoseV2
                             buffer[i + 1] = (byte)(result >> 8);
                         }
                     }
-                    lock (pauselock)
-                    {
-                        if (!paused)
-                        {
-                            _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
-                        }
-                    }
+                    _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
                 }
             }
-        }
-
-        private static string CleanFileName(string fileName)
-        {
-            return Path.GetInvalidFileNameChars().Aggregate(fileName, (current, c) => current.Replace(c.ToString(), string.Empty));
         }
 
         private void Log(object sender, LogMessageEventArgs e)
@@ -461,5 +471,33 @@ namespace ChitoseV2
         }
 
         private enum AudioStatus { Stopped, Stopping, Playing };
+
+        public class JishoResponse
+        {
+            public Result[] data;
+
+            public class Result
+            {
+                public bool is_common;
+
+                public Japanese[] japanese;
+
+                public Details[] senses;
+
+                public string[] tags;
+
+                public class Details
+                {
+                    public string[] english_definitions;
+                    public string[] parts_of_speech;
+                }
+
+                public class Japanese
+                {
+                    public string reading;
+                    public string word;
+                }
+            }
+        }
     }
 }
