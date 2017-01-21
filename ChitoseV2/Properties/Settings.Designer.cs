@@ -34,7 +34,7 @@ namespace ChitoseV2.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Samuel\\Documents\\ChitoseV2\\Config\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Scott\\Desktop\\BOT\\Temp\\")]
         public string TempDirectory {
             get {
                 return ((string)(this["TempDirectory"]));
@@ -43,7 +43,7 @@ namespace ChitoseV2.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Samuel\\Documents\\ChitoseV2\\Config\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("C:\\Users\\Scott\\Desktop\\BOT\\Config\\")]
         public string ConfigDirectory {
             get {
                 return ((string)(this["ConfigDirectory"]));

@@ -280,7 +280,7 @@ namespace ChitoseV2
                     }
                 });
 
-                cgb.CreateCommand("join").Parameter("channel").Do(async (e) =>
+                cgb.CreateCommand("join").Parameter("channel", ParameterType.Optional).Do(async (e) =>
                 {
                     var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
                     if (voiceChannel == null)
@@ -341,7 +341,7 @@ namespace ChitoseV2
 
                 cgb.CreateCommand("help").Do(async (e) =>
                 {
-                    await e.User.SendMessage(string.Format("Current prefix: {0} \n music add [search terms, multiple words allowed] => Adds most relevant video to the end of the quene \n music clear => Clears the quene \n music skip => Skips the currently playing song \n music quene => Shows the quene \n music next [index of song] => Moves the specified song to the top of the quene \n music remove [index of song] => Removes the specified song from the quene \n music play => Starts playing (If there are no songs on the quene, it will automatically play the next song added) \n music stop => Stops playing \n music pause => Pauses the current song \n music resume => Resumes the current song \n music joni [name of voice channel] => Joins the specified channel \n music leave => Leaves the current channel \n music volume [0 - 100] => Sets the volume" , prefix));
+                    await e.User.SendMessage(string.Format("{0} \n Current prefix: {1} \n music add [search terms, multiple words allowed] => Adds most relevant video to the end of the quene \n music clear => Clears the quene \n music skip => Skips the currently playing song \n music quene => Shows the quene \n music next [index of song] => Moves the specified song to the top of the quene \n music remove [index of song] => Removes the specified song from the quene \n music play => Starts playing (If there are no songs on the quene, it will automatically play the next song added) \n music stop => Stops playing \n music pause => Pauses the current song \n music resume => Resumes the current song \n music joni [name of voice channel] => Joins the specified channel \n music leave => Leaves the current channel \n music volume [0 - 100] => Sets the volume" ,e.User.Mention, prefix));
                 }); 
             });
 
