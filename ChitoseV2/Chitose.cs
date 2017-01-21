@@ -190,7 +190,7 @@ namespace ChitoseV2
                 HttpWebRequest getJapanese = WebRequest.CreateHttp(@"http://jisho.org/api/v1/search/words?keyword=" + string.Join("+", e.Args));
                 using (Stream response = (await getJapanese.GetResponseAsync()).GetResponseStream())
                 {
-                    string jsonResult = new StreamReader(response).ReadToEnd();
+                    string jsonResult = response.ReadString();
                     JishoResponse result = json.Deserialize<JishoResponse>(jsonResult);
                     StringBuilder message = new StringBuilder();
                     for (int i = 0; i < Math.Min(5, result.data.Length); i++)
@@ -241,7 +241,7 @@ namespace ChitoseV2
 
             client.ExecuteAndWait(async () =>
             {
-                await client.Connect(new StreamReader(File.OpenRead(ConfigDirectory + "token.txt")).ReadToEnd(), TokenType.Bot);
+                await client.Connect(File.OpenRead(ConfigDirectory + "token.txt").ReadString(), TokenType.Bot);
 
                 client.SetGame("with lolis～");
             });

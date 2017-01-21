@@ -1,5 +1,5 @@
-﻿using System;
-using System.IO;
+﻿using ChitoseV2;
+using System;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -45,7 +45,7 @@ namespace Mayushii.Services
             try
             {
                 WebResponse response = postRequest.GetResponse();
-                string postResponse = new StreamReader(response.GetResponseStream()).ReadToEnd();
+                string postResponse = response.GetResponseStream().ReadString();
                 return json.Deserialize<Post[]>(postResponse);
             }
             catch (WebException)
