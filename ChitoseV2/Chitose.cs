@@ -33,6 +33,8 @@ namespace ChitoseV2
         private CommandService commands;
         private YouTubeService youtubeService;
         private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
+        private bool paused = false;
+        private object pauselock = new object(); 
 
         public Chitose()
         {
@@ -60,7 +62,7 @@ namespace ChitoseV2
             client.UsingAudio(x =>
             {
                 x.Mode = AudioMode.Outgoing;
-            });
+            });  
 
             //Services
             commands = client.GetService<CommandService>();
@@ -127,11 +129,12 @@ namespace ChitoseV2
                 await channel.SendMessage(string.Format("@everyone {0} has been banned from the server.", e.User.Name));
             };
 
+            //General Commands
             commands.CreateCommand("myrole").Do(async (e) =>
             {
                 var role = string.Join(" , ", e.User.Roles);
 
-                await e.Channel.SendMessage(string.Format("```Your roles are: {0} ```", role));
+                await e.Channel.SendMessage(string.Format("```{0} your roles are: {1}```", e.User.Mention, role));
             });
 
             commands.CreateCommand("myav").Do(async (e) =>
@@ -168,10 +171,11 @@ namespace ChitoseV2
 
             commands.CreateCommand("join").Parameter("channel").Do(async (e) =>
             {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == e.GetArg("channel"));
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
                 if (voiceChannel.Users.Count() != 0)
                 {
                     _vClient = await audio.Join(voiceChannel);
+                    await e.Channel.SendMessage("Joined " + voiceChannel.ToString()); 
                 }
                 else
                 {
@@ -184,69 +188,109 @@ namespace ChitoseV2
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
 
                 await audio.Leave(voiceChannel);
+
+                await e.Channel.SendMessage("Left " + voiceChannel.ToString()); 
             });
 
-            commands.CreateCommand("pause").Do((e) =>
+            commands.CreateCommand("pause").Do(async (e) =>
             {
-                Process process = new Process();
-                process.Close();
+                if(audioStatus == AudioStatus.Playing)
+                {
+                    lock (pauselock)
+                    {
+                        paused = true;
+                    }
+                }
+                else
+                {
+                    await e.Channel.SendMessage("Nothing is playing...");
+                }
             });
-
-            commands.CreateCommand("resume").Do((e) =>
-           {
-               Process process = new Process();
-               process.Start();
-           });
 
             commands.CreateCommand("play").Parameter("song", ParameterType.Multiple).Do(async (e) =>
             {
-                if (_vClient != null)
+                if(audioStatus == AudioStatus.Playing)
                 {
-                    if (audioStatus == AudioStatus.Playing)
+                    if(paused == true)
                     {
-                        lock (AudioStatusLock)
-                        {
-                            audioStatus = AudioStatus.Stopping;
-                            Console.WriteLine("Audio Stop Requested");
-                        }
+                        paused = false; 
                     }
-                    var searchRequest = youtubeService.Search.List("snippet");
-                    searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
-                    searchRequest.Q = string.Join("+", e.Args);
-                    searchRequest.MaxResults = 25;
-                    var response = await searchRequest.ExecuteAsync();
-                    var result = response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
-                    if (result != null)
+
+                    else
                     {
-                        string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
-                        await e.Channel.SendMessage("Playing " + link);
-                        IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
-                        VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
-                        if (video != null)
+
+                    }
+                }
+                else
+                {
+                    if (_vClient != null)
+                    {
+                        if (audioStatus == AudioStatus.Playing)
                         {
-                            if (video.RequiresDecryption)
+                            lock (AudioStatusLock)
                             {
-                                DownloadUrlResolver.DecryptDownloadUrl(video);
+                                audioStatus = AudioStatus.Stopping;
+                                Console.WriteLine("Audio Stop Requested");
                             }
-                            string videoFile = TempDirectory + CleanFileName(video.Title + video.VideoExtension);
-                            string audioFile = TempDirectory + CleanFileName(video.Title + ".mp3");
-                            var videoDownloader = new VideoDownloader(video, videoFile);
-                            videoDownloader.Execute();
-                            File.Delete(audioFile);
-                            Process process = new Process();
-                            process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
-                            process.StartInfo.RedirectStandardOutput = true;
-                            process.StartInfo.RedirectStandardError = true;
-                            process.StartInfo.Arguments = $"-i \"{videoFile}\" \"{audioFile}\"";
-                            process.StartInfo.UseShellExecute = false;
-                            process.StartInfo.CreateNoWindow = true;
-                            process.Start();
-                            process.WaitForExit();
-                            process.Close();
-                            SendAudio(audioFile);
+                        }
+
+                        var searchRequest = youtubeService.Search.List("snippet");
+                        searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
+                        searchRequest.Q = string.Join("+", e.Args);
+                        searchRequest.MaxResults = 25;
+                        var response = await searchRequest.ExecuteAsync();
+                        var result = response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
+                        if (result != null)
+                        {
+                            string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
+                            await e.Channel.SendMessage("Playing " + link);
+                            IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
+                            VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
+                            if (video != null)
+                            {
+                                if (video.RequiresDecryption)
+                                {
+                                    DownloadUrlResolver.DecryptDownloadUrl(video);
+                                }
+                                string videoFile = TempDirectory + CleanFileName(video.Title + video.VideoExtension);
+                                string audioFile = TempDirectory + CleanFileName(video.Title + ".mp3");
+                                var videoDownloader = new VideoDownloader(video, videoFile);
+                                videoDownloader.Execute();
+                                File.Delete(audioFile);
+                                Process process = new Process();
+                                process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
+                                process.StartInfo.RedirectStandardOutput = true;
+                                process.StartInfo.RedirectStandardError = true;
+                                process.StartInfo.Arguments = $"-i \"{videoFile}\" \"{audioFile}\"";
+                                process.StartInfo.UseShellExecute = false;
+                                process.StartInfo.CreateNoWindow = true;
+                                process.Start();
+                                process.WaitForExit();
+                                process.Close();
+                                SendAudio(audioFile);
+                                File.Delete(audioFile);
+                                File.Delete(videoFile);
+                            }
                         }
                     }
                 }
+            });
+
+            commands.CreateCommand("playfile").Do(async (e) =>
+            {
+                string audioFile = TempDirectory + CleanFileName("Gillum" + ".mp3");
+                await e.Channel.SendMessage("Playing " + "gillum");
+                Process process = new Process();
+                process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.Arguments = $"-i \"{audioFile}\"";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                process.WaitForExit();
+                process.Close();
+                SendAudio(audioFile);
             });
 
             commands.CreateCommand("volume").Parameter("volume").Do((e) =>
@@ -395,7 +439,13 @@ namespace ChitoseV2
                             buffer[i + 1] = (byte)(result >> 8);
                         }
                     }
-                    _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
+                    lock (pauselock)
+                    {
+                        if (!paused)
+                        {
+                            _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
+                        }
+                    }
                 }
             }
         }
