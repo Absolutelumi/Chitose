@@ -27,9 +27,12 @@ namespace ChitoseV2
 
         private IAudioClient client;
 
+        private object clientLock = new object();
         private Song currentSong;
 
         private AudioState currentState;
+
+        private object currentStateLock = new object();
 
         private bool paused;
 
@@ -59,6 +62,42 @@ namespace ChitoseV2
                 lock (volumeLock)
                 {
                     volume = value;
+                }
+            }
+        }
+
+        private IAudioClient Client
+        {
+            get
+            {
+                lock (clientLock)
+                {
+                    return client;
+                }
+            }
+            set
+            {
+                lock (clientLock)
+                {
+                    client = value;
+                }
+            }
+        }
+
+        private AudioState CurrentState
+        {
+            get
+            {
+                lock (currentStateLock)
+                {
+                    return currentState;
+                }
+            }
+            set
+            {
+                lock (currentStateLock)
+                {
+                    currentState = value;
                 }
             }
         }
@@ -115,7 +154,7 @@ namespace ChitoseV2
             if (bestResult != null)
             {
                 queue.Add(new Song() { Title = bestResult.Snippet.Title, Url = $"https://www.youtube.com/watch?v={bestResult.Id.VideoId}" });
-                if (queue.Count == 1 && currentState == AudioState.Playing && currentSong == null)
+                if (queue.Count == 1 && CurrentState == AudioState.Playing && currentSong == null)
                 {
                     PlayNext();
                 }
@@ -134,9 +173,9 @@ namespace ChitoseV2
 
         public async Task<bool> ConnectTo(Discord.Channel voiceChannel)
         {
-            if (client == null || client.Channel.Name != voiceChannel.Name)
+            if (Client == null || Client.State == Discord.ConnectionState.Disconnected || Client.Channel.Name != voiceChannel.Name)
             {
-                client = await service.Join(voiceChannel);
+                Client = await service.Join(voiceChannel);
                 return true;
             }
             else
@@ -152,11 +191,11 @@ namespace ChitoseV2
 
         public bool Leave()
         {
-            if (client != null)
+            if (Client != null)
             {
                 StopPlaying();
-                service.Leave(client.Channel);
-                client = null;
+                service.Leave(Client.Channel);
+                Client = null;
                 return true;
             }
             else
@@ -234,13 +273,13 @@ namespace ChitoseV2
 
         public bool StartPlaying()
         {
-            if (client == null)
+            if (Client == null)
             {
                 return false;
             }
-            if (currentState != AudioState.Playing)
+            if (CurrentState != AudioState.Playing)
             {
-                currentState = AudioState.Playing;
+                CurrentState = AudioState.Playing;
                 PlayNext();
                 return true;
             }
@@ -252,10 +291,10 @@ namespace ChitoseV2
 
         public bool StopPlaying()
         {
-            if (currentState != AudioState.Stopped)
+            if (CurrentState != AudioState.Stopped)
             {
                 RequestStop = true;
-                currentState = AudioState.Stopped;
+                CurrentState = AudioState.Stopped;
                 return true;
             }
             else
@@ -299,7 +338,7 @@ namespace ChitoseV2
         {
             //File.Delete(Chitose.TempDirectory + Chitose.CleanFileName(currentSong.Title + ".mp3"));
             currentSong = null;
-            if (currentState == AudioState.Playing)
+            if (CurrentState == AudioState.Playing)
             {
                 PlayNext();
             }
@@ -317,10 +356,10 @@ namespace ChitoseV2
 
         private void PlayFile(string filePath)
         {
-            if (client != null)
+            if (Client != null)
             {
                 var channelCount = service.Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
-                var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
+                var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our Client supports.
                 using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
                 using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
                 {
@@ -353,9 +392,14 @@ namespace ChitoseV2
                         }
                         try
                         {
-                            client.Send(Paused ? silence : buffer, 0, blockSize); // Send the buffer to Discord
+                            Client.Send(Paused ? silence : buffer, 0, blockSize); // Send the buffer to Discord
                         }
-                        catch (Exception) { }
+                        catch (Exception)
+                        {
+                            Client = null;
+                            CurrentState = AudioState.Stopped;
+                            break;
+                        }
                         if (!Paused)
                         {
                             byteCount = resampler.Read(buffer, 0, blockSize);
