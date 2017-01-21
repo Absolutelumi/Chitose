@@ -3,7 +3,9 @@ using Discord.Audio;
 using Discord.Commands;
 using Google.Apis.Services;
 using Google.Apis.YouTube.v3;
+using Mayushii.Services;
 using NAudio.Wave;
+using RedditSharp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -25,20 +27,26 @@ namespace ChitoseV2
         private AudioService audio;
         private AudioStatus audioStatus = AudioStatus.Stopped;
         private object AudioStatusLock = new object();
-        private float volume = 1.0f;
+        private float volume = 0.5f;
         private object VolumeLock = new object();
         private DiscordClient client;
         private CommandService commands;
         private YouTubeService youtubeService;
         private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
+        private bool paused = false;
+        private object pauselock = new object(); 
 
         public Chitose()
         {
             youtubeService = new YouTubeService(new BaseClientService.Initializer() { ApiKey = "AIzaSyCiwm6X53K2uXqGfGBVY1RSfp25U7h-wp8", ApplicationName = GetType().Name });
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
             Random random = new Random();
 
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls12 | SecurityProtocolType.Ssl3;
-
+            //Reddit Variables
+            var reddit = new Reddit();
+            var reddituser = reddit.LogIn("absoIutelumi", "jackson1");
+            
+            //Client Setup
             client = new DiscordClient(input =>
             {
                 input.LogLevel = LogSeverity.Info;
@@ -54,12 +62,14 @@ namespace ChitoseV2
             client.UsingAudio(x =>
             {
                 x.Mode = AudioMode.Outgoing;
-            });
+            });  
 
+            //Services
             commands = client.GetService<CommandService>();
 
             audio = client.GetService<AudioService>();
 
+            //Chitose Picture Response
             System.IO.StreamReader filereader = new System.IO.StreamReader(ConfigDirectory + "Chitose.txt");
             string line = filereader.ReadLine();
             while (line != null)
@@ -78,6 +88,8 @@ namespace ChitoseV2
 
             Console.Clear();
 
+
+            //Server Updates
             client.UserJoined += async (s, e) =>
             {
                 var channel = e.Server.FindChannels("announcements").FirstOrDefault();
@@ -99,10 +111,14 @@ namespace ChitoseV2
             client.UserUpdated += async (s, e) =>
             {
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
-                if (voiceChannel.Users.Count() == 1)
+
+                if (voiceChannel != null)
                 {
-                    await audio.Leave(voiceChannel);
-                    _vClient = null;
+                    if (voiceChannel.Users.Count() == 1)
+                    {
+                        await audio.Leave(voiceChannel);
+                        _vClient = null;
+                    }
                 }
             };
 
@@ -113,11 +129,12 @@ namespace ChitoseV2
                 await channel.SendMessage(string.Format("@everyone {0} has been banned from the server.", e.User.Name));
             };
 
+            //General Commands
             commands.CreateCommand("myrole").Do(async (e) =>
             {
                 var role = string.Join(" , ", e.User.Roles);
 
-                await e.Channel.SendMessage(string.Format("```Your roles are: {0} ```", role));
+                await e.Channel.SendMessage(string.Format("```{0} your roles are: {1}```", e.User.Mention, role));
             });
 
             commands.CreateCommand("myav").Do(async (e) =>
@@ -154,10 +171,11 @@ namespace ChitoseV2
 
             commands.CreateCommand("join").Parameter("channel").Do(async (e) =>
             {
-                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name == e.GetArg("channel"));
+                var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
                 if (voiceChannel.Users.Count() != 0)
                 {
                     _vClient = await audio.Join(voiceChannel);
+                    await e.Channel.SendMessage("Joined " + voiceChannel.ToString()); 
                 }
                 else
                 {
@@ -170,65 +188,119 @@ namespace ChitoseV2
                 var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().FindUsers("Chitose").FirstOrDefault().VoiceChannel;
 
                 await audio.Leave(voiceChannel);
-            }); 
+
+                await e.Channel.SendMessage("Left " + voiceChannel.ToString()); 
+            });
+
+            commands.CreateCommand("pause").Do(async (e) =>
+            {
+                if(audioStatus == AudioStatus.Playing)
+                {
+                    lock (pauselock)
+                    {
+                        paused = true;
+                    }
+                }
+                else
+                {
+                    await e.Channel.SendMessage("Nothing is playing...");
+                }
+            });
 
             commands.CreateCommand("play").Parameter("song", ParameterType.Multiple).Do(async (e) =>
             {
-                if (_vClient != null)
+                if(audioStatus == AudioStatus.Playing)
                 {
-                    if (audioStatus == AudioStatus.Playing)
+                    if(paused == true)
                     {
-                        lock (AudioStatusLock)
-                        {
-                            audioStatus = AudioStatus.Stopping;
-                            Console.WriteLine("Audio Stop Requested");
-                        }
+                        paused = false; 
                     }
-                    var searchRequest = youtubeService.Search.List("snippet");
-                    searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
-                    searchRequest.Q = string.Join("+", e.Args);
-                    searchRequest.MaxResults = 25;
-                    var response = await searchRequest.ExecuteAsync();
-                    var result = response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
-                    if (result != null)
+
+                    else
                     {
-                        string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
-                        await e.Channel.SendMessage("Playing " + link);
-                        IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
-                        VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
-                        if (video != null)
+
+                    }
+                }
+                else
+                {
+                    if (_vClient != null)
+                    {
+                        if (audioStatus == AudioStatus.Playing)
                         {
-                            if (video.RequiresDecryption)
+                            lock (AudioStatusLock)
                             {
-                                DownloadUrlResolver.DecryptDownloadUrl(video);
+                                audioStatus = AudioStatus.Stopping;
+                                Console.WriteLine("Audio Stop Requested");
                             }
-                            string videoFile = TempDirectory + CleanFileName(video.Title + video.VideoExtension);
-                            string audioFile = TempDirectory + CleanFileName(video.Title + ".mp3");
-                            var videoDownloader = new VideoDownloader(video, videoFile);
-                            videoDownloader.Execute();
-                            File.Delete(audioFile);
-                            Process process = new Process();
-                            process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
-                            process.StartInfo.RedirectStandardOutput = true;
-                            process.StartInfo.RedirectStandardError = true;
-                            process.StartInfo.Arguments = $"-i \"{videoFile}\" \"{audioFile}\"";
-                            process.StartInfo.UseShellExecute = false;
-                            process.StartInfo.CreateNoWindow = true;
-                            process.Start();
-                            process.WaitForExit();
-                            process.Close();
-                            SendAudio(audioFile);
+                        }
+
+                        var searchRequest = youtubeService.Search.List("snippet");
+                        searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
+                        searchRequest.Q = string.Join("+", e.Args);
+                        searchRequest.MaxResults = 25;
+                        var response = await searchRequest.ExecuteAsync();
+                        var result = response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
+                        if (result != null)
+                        {
+                            string link = $"https://www.youtube.com/watch?v={result.Id.VideoId}";
+                            await e.Channel.SendMessage("Playing " + link);
+                            IEnumerable<VideoInfo> infos = DownloadUrlResolver.GetDownloadUrls(link);
+                            VideoInfo video = infos.OrderByDescending(info => info.AudioBitrate).FirstOrDefault();
+                            if (video != null)
+                            {
+                                if (video.RequiresDecryption)
+                                {
+                                    DownloadUrlResolver.DecryptDownloadUrl(video);
+                                }
+                                string videoFile = TempDirectory + CleanFileName(video.Title + video.VideoExtension);
+                                string audioFile = TempDirectory + CleanFileName(video.Title + ".mp3");
+                                var videoDownloader = new VideoDownloader(video, videoFile);
+                                videoDownloader.Execute();
+                                File.Delete(audioFile);
+                                Process process = new Process();
+                                process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
+                                process.StartInfo.RedirectStandardOutput = true;
+                                process.StartInfo.RedirectStandardError = true;
+                                process.StartInfo.Arguments = $"-i \"{videoFile}\" \"{audioFile}\"";
+                                process.StartInfo.UseShellExecute = false;
+                                process.StartInfo.CreateNoWindow = true;
+                                process.Start();
+                                process.WaitForExit();
+                                process.Close();
+                                SendAudio(audioFile);
+                                File.Delete(audioFile);
+                                File.Delete(videoFile);
+                            }
                         }
                     }
                 }
             });
 
+            commands.CreateCommand("playfile").Do(async (e) =>
+            {
+                string audioFile = TempDirectory + CleanFileName("Gillum" + ".mp3");
+                await e.Channel.SendMessage("Playing " + "gillum");
+                Process process = new Process();
+                process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
+                process.StartInfo.Arguments = $"-i \"{audioFile}\"";
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.CreateNoWindow = true;
+                process.Start();
+                process.WaitForExit();
+                process.Close();
+                SendAudio(audioFile);
+            });
+
             commands.CreateCommand("volume").Parameter("volume").Do((e) =>
             {
                 float value = float.Parse(e.GetArg("volume"));
-                if (value >= 0 && value <= 1)
+                if (value >= 0 && value <= 100)
                 {
-                    lock(VolumeLock)
+                    value = value / 100.0f; 
+
+                    lock (VolumeLock)
                     {
                         volume = value;
                     }
@@ -245,11 +317,11 @@ namespace ChitoseV2
                     string jsonResult = new StreamReader(response).ReadToEnd();
                     JishoResponse result = json.Deserialize<JishoResponse>(jsonResult);
                     StringBuilder message = new StringBuilder();
-                    for(int i = 0; i < Math.Min(5, result.data.Length); i++)
+                    for (int i = 0; i < Math.Min(5, result.data.Length); i++)
                     {
                         JishoResponse.Result word = result.data[i];
                         message.AppendLine("```");
-                        message.AppendLine(word.is_common ? "Common": "Uncommon");
+                        message.AppendLine(word.is_common ? "Common" : "Uncommon");
                         message.AppendLine("Japanese Translations:");
                         message.AppendLine("\t" + string.Join(", ", word.japanese.Select(o => o.word == null ? o.reading : o.word + " (" + o.reading + ")")));
                         message.AppendLine("English Translations:");
@@ -260,9 +332,41 @@ namespace ChitoseV2
                 }
             });
 
+            //Pictures
+
+            commands.CreateCommand("reddit").Parameter("subreddit").Do(async (e) =>
+            {
+                var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
+                int indexer = random.Next(100);
+
+                var postlist = subreddit.Hot.Take(100);
+                var post = postlist.ToList()[indexer];
+                string posturl = post.Url.ToString();
+
+                await e.Channel.SendMessage(posturl);
+            });
+
+            commands.CreateCommand("show").Parameter("keyword", ParameterType.Multiple).Do(async (e) =>
+            {
+                string[] arg = e.Args;
+                string url = DanbooruService.GetRandomImage(arg);
+                string temppath = TempDirectory + arg.ToString() + "booru.png"; 
+
+                using (WebClient client = new WebClient())
+                {
+                    client.DownloadFile(new Uri(url), temppath);
+                }
+
+                await e.Channel.SendFile(temppath);
+
+                File.Delete(temppath);
+            });
+
             client.ExecuteAndWait(async () =>
             {
                 await client.Connect("MjY1MzU3OTQwNDU2Njg1NTc5.C08iSQ.0JuccBwAn2mYftmvgNdygJyIK-w", TokenType.Bot);
+
+                client.SetGame("with lolis～"); 
             });
         }
 
@@ -275,35 +379,38 @@ namespace ChitoseV2
                     public string word;
                     public string reading;
                 }
+
                 public class Details
                 {
                     public string[] english_definitions;
                     public string[] parts_of_speech;
                 }
+
                 public bool is_common;
                 public string[] tags;
                 public Japanese[] japanese;
                 public Details[] senses;
             }
+
             public Result[] data;
         }
 
         public void SendAudio(string filePath)
         {
-                lock (AudioStatusLock)
-                {
-                    audioStatus = AudioStatus.Playing;
-                    Console.WriteLine("Audio Starting");
-                }
-                var channelCount = client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
-                var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
-                using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
-                using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
-                {
-                    resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
-                    int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
-                    byte[] buffer = new byte[blockSize];
-                    int byteCount;
+            lock (AudioStatusLock)
+            {
+                audioStatus = AudioStatus.Playing;
+                Console.WriteLine("Audio Starting");
+            }
+            var channelCount = client.GetService<AudioService>().Config.Channels; // Get the number of AudioChannels our AudioService has been configured to use.
+            var OutFormat = new WaveFormat(48000, 16, channelCount); // Create a new Output Format, using the spec that Discord will accept, and with the number of channels that our client supports.
+            using (var MP3Reader = new Mp3FileReader(filePath)) // Create a new Disposable MP3FileReader, to read audio from the filePath parameter
+            using (var resampler = new MediaFoundationResampler(MP3Reader, OutFormat)) // Create a Disposable Resampler, which will convert the read MP3 data to PCM, using our Output Format
+            {
+                resampler.ResamplerQuality = 60; // Set the quality of the resampler to 60, the highest quality
+                int blockSize = OutFormat.AverageBytesPerSecond / 50; // Establish the size of our AudioBuffer
+                byte[] buffer = new byte[blockSize];
+                int byteCount;
 
                 while ((byteCount = resampler.Read(buffer, 0, blockSize)) > 0) // Read audio into our buffer, and keep a loop open while data is present
                 {
@@ -322,7 +429,7 @@ namespace ChitoseV2
                         for (int i = byteCount; i < blockSize; i++)
                             buffer[i] = 0;
                     }
-                    for(int i = 0; i < buffer.Length; i += 2)
+                    for (int i = 0; i < buffer.Length; i += 2)
                     {
                         short sample = (short)(buffer[i] | (buffer[i + 1] << 8));
                         lock (VolumeLock)
@@ -332,7 +439,13 @@ namespace ChitoseV2
                             buffer[i + 1] = (byte)(result >> 8);
                         }
                     }
-                    _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
+                    lock (pauselock)
+                    {
+                        if (!paused)
+                        {
+                            _vClient.Send(buffer, 0, blockSize); // Send the buffer to Discord
+                        }
+                    }
                 }
             }
         }
