@@ -172,7 +172,7 @@ namespace ChitoseV2
 
         public bool StartPlaying()
         {
-            if (Client == null || CurrentState == AudioState.Stopped)
+            if (Client == null || CurrentState == AudioState.Playing)
                 return false;
             CurrentState = AudioState.Playing;
             PlayNext();
