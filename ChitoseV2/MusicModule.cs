@@ -26,26 +26,16 @@ namespace ChitoseV2
         private readonly AudioService service;
 
         private IAudioClient client;
-
         private object clientLock = new object();
         private Song currentSong;
-
         private AudioState currentState;
-
         private object currentStateLock = new object();
-
         private bool paused;
-
         private object pausedLock = new object();
-
         private List<Song> queue;
-
         private bool requestStop;
-
         private object requestStopLock = new object();
-
         private float volume;
-
         private object volumeLock = new object();
 
         public float Volume
@@ -394,8 +384,9 @@ namespace ChitoseV2
                         {
                             Client.Send(Paused ? silence : buffer, 0, blockSize); // Send the buffer to Discord
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
+                            Console.WriteLine(e.Message);
                             Client = null;
                             CurrentState = AudioState.Stopped;
                             break;
