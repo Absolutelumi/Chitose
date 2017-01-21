@@ -142,6 +142,7 @@
     <Compile Include="Chitose.cs" />
     <Compile Include="CommandSet.cs" />
     <Compile Include="DanbooruService.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="MusicCommands.cs" />
     <Compile Include="MusicModule.cs" />
     <Compile Include="Program.cs" />
