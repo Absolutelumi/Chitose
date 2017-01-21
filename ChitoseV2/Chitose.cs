@@ -17,10 +17,6 @@ namespace ChitoseV2
         public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
         public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
         private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
-        private AudioService audio;
-        private DiscordClient client;
-        private CommandService commands;
-        private MusicModule music;
         private char prefix = '!';
 
         public Chitose()
@@ -32,7 +28,7 @@ namespace ChitoseV2
             var reddit = new Reddit();
 
             //Client Setup
-            client = new DiscordClient(input =>
+            var client = new DiscordClient(input =>
             {
                 input.LogLevel = LogSeverity.Info;
                 input.LogHandler = (_, e) => Console.WriteLine(e.Message);
@@ -51,11 +47,11 @@ namespace ChitoseV2
             });
 
             //Services
-            commands = client.GetService<CommandService>();
+            var commands = client.GetService<CommandService>();
 
-            audio = client.GetService<AudioService>();
+            var audio = client.GetService<AudioService>();
 
-            music = new MusicModule(audio);
+            var music = new MusicModule(audio);
             music.OnSongChanged += async (title) =>
             {
                 await client.FindServers("Too Too Roo").FirstOrDefault().TextChannels.Where(channel => channel.Name == "music").FirstOrDefault().SendMessage("Now playing " + (title ?? "nothing"));
