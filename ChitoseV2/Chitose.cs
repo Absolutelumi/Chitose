@@ -29,6 +29,7 @@ namespace ChitoseV2
         private MusicModule music;
         private float volume = 0.5f;
         private object VolumeLock = new object();
+        private char prefix = '!'; 
 
         public Chitose()
         {
@@ -36,8 +37,7 @@ namespace ChitoseV2
             Random random = new Random();
 
             //Reddit Variables
-            var reddit = new Reddit();
-            var reddituser = reddit.LogIn("absoIutelumi", "jackson1");
+            var reddit = new Reddit(); 
 
             //Client Setup
             client = new DiscordClient(input =>
@@ -48,7 +48,7 @@ namespace ChitoseV2
 
             client.UsingCommands(input =>
             {
-                input.PrefixChar = '!';
+                input.PrefixChar = prefix;
                 input.AllowMentionPrefix = true;
             });
 
@@ -288,6 +288,12 @@ namespace ChitoseV2
                         await e.Channel.SendMessage(e.GetArg("channel") + " does not exist!");
                         return;
                     }
+                    if(e.GetArg("channel") == null)
+                    {
+                        var UserVoiceChannel = e.User.VoiceChannel;
+
+                        await music.ConnectTo(UserVoiceChannel);
+                    }
                     if (voiceChannel.Users.Count() != 0)
                     {
                         bool success = await music.ConnectTo(voiceChannel);
@@ -332,6 +338,11 @@ namespace ChitoseV2
                         music.Volume = value / 100.0f;
                     }
                 });
+
+                cgb.CreateCommand("help").Do(async (e) =>
+                {
+                    await e.User.SendMessage(string.Format("Current prefix: {0} \n music add [search terms, multiple words allowed] => Adds most relevant video to the end of the quene \n music clear => Clears the quene \n music skip => Skips the currently playing song \n music quene => Shows the quene \n music next [index of song] => Moves the specified song to the top of the quene \n music remove [index of song] => Removes the specified song from the quene \n music play => Starts playing (If there are no songs on the quene, it will automatically play the next song added) \n music stop => Stops playing \n music pause => Pauses the current song \n music resume => Resumes the current song \n music joni [name of voice channel] => Joins the specified channel \n music leave => Leaves the current channel \n music volume [0 - 100] => Sets the volume" , prefix));
+                }); 
             });
 
             commands.CreateCommand("playfile").Do(async (e) =>
