@@ -304,8 +304,8 @@ namespace ChitoseV2
                 {
                     DownloadUrlResolver.DecryptDownloadUrl(video);
                 }
-                string videoFile = Chitose.TempDirectory + Chitose.CleanFileName(song.Title + video.VideoExtension);
-                string audioFile = Chitose.TempDirectory + Chitose.CleanFileName(song.Title + ".mp3");
+                string videoFile = Chitose.TempDirectory + Extensions.CleanFileName(song.Title + video.VideoExtension);
+                string audioFile = Chitose.TempDirectory + Extensions.CleanFileName(song.Title + ".mp3");
                 var videoDownloader = new VideoDownloader(video, videoFile);
                 videoDownloader.Execute();
                 File.Delete(audioFile);

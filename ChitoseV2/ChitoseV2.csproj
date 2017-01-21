@@ -140,7 +140,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Chitose.cs" />
+    <Compile Include="CommandSet.cs" />
     <Compile Include="DanbooruService.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="MusicCommands.cs" />
     <Compile Include="MusicModule.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -151,7 +154,7 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -171,8 +174,8 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\RedditSharp-master\RedditSharp\RedditSharp.csproj">
-      <Project>{A368CB75-75F0-4489-904D-B5CEBB0FE624}</Project>
+    <ProjectReference Include="..\RedditSharp\RedditSharp\RedditSharp.csproj">
+      <Project>{a368cb75-75f0-4489-904d-b5cebb0fe624}</Project>
       <Name>RedditSharp</Name>
     </ProjectReference>
   </ItemGroup>
