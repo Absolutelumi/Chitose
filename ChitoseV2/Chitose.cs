@@ -338,28 +338,6 @@ namespace ChitoseV2
                         music.Volume = value / 100.0f;
                     }
                 });
-
-                cgb.CreateCommand("help").Do(async (e) =>
-                {
-                    await e.User.SendMessage(string.Format("{0} \n Current prefix: {1} \n music add [search terms, multiple words allowed] => Adds most relevant video to the end of the quene \n music clear => Clears the quene \n music skip => Skips the currently playing song \n music quene => Shows the quene \n music next [index of song] => Moves the specified song to the top of the quene \n music remove [index of song] => Removes the specified song from the quene \n music play => Starts playing (If there are no songs on the quene, it will automatically play the next song added) \n music stop => Stops playing \n music pause => Pauses the current song \n music resume => Resumes the current song \n music joni [name of voice channel] => Joins the specified channel \n music leave => Leaves the current channel \n music volume [0 - 100] => Sets the volume" ,e.User.Mention, prefix));
-                }); 
-            });
-
-            commands.CreateCommand("playfile").Do(async (e) =>
-            {
-                string audioFile = TempDirectory + CleanFileName("Gillum" + ".mp3");
-                await e.Channel.SendMessage("Playing " + "gillum");
-                Process process = new Process();
-                process.StartInfo.FileName = FfmpegPath + "ffmpeg.exe";
-                process.StartInfo.RedirectStandardOutput = true;
-                process.StartInfo.RedirectStandardError = true;
-                process.StartInfo.Arguments = $"-i \"{audioFile}\"";
-                process.StartInfo.UseShellExecute = false;
-                process.StartInfo.CreateNoWindow = true;
-                process.Start();
-                process.WaitForExit();
-                process.Close();
-                SendAudio(audioFile);
             });
 
             //Japanese
