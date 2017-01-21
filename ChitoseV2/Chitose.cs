@@ -44,6 +44,7 @@ namespace ChitoseV2
 
             //Reddit Variables
             var reddit = new Reddit();
+            var reddituser = reddit.LogIn("absoIutelumi", "jackson1");
             
             //Client Setup
             client = new DiscordClient(input =>
@@ -363,7 +364,7 @@ namespace ChitoseV2
 
             client.ExecuteAndWait(async () =>
             {
-                await client.Connect(tokenline, TokenType.Bot);
+                await client.Connect("MjY1MzU3OTQwNDU2Njg1NTc5.C08iSQ.0JuccBwAn2mYftmvgNdygJyIK-w", TokenType.Bot);
 
                 client.SetGame("with lolis～"); 
             });
