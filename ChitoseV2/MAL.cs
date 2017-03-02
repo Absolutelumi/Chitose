@@ -28,7 +28,8 @@ namespace ChitoseV2
             {
                 string tempdir = Chitose.TempDirectory + title + " Pic.png";
                 Regex tags = new Regex("<.*>");
-                
+
+                title = e.GetArg("animename"); 
                 myAnimeList.AnimeResult anime = myAnimeList.FindMyAnime(title, Chitose.MALUsername, Chitose.MALPassword);
 
                 title = anime.title; 
