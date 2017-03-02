@@ -143,11 +143,15 @@
     <Compile Include="ChitosePictureResponse.cs" />
     <Compile Include="CommandSet.cs" />
     <Compile Include="DanbooruService.cs" />
+    <Compile Include="Emoji.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Games.cs" />
     <Compile Include="GeneralCommands.cs" />
     <Compile Include="Japanese.cs" />
+    <Compile Include="MAL.cs" />
     <Compile Include="MusicCommands.cs" />
     <Compile Include="MusicModule.cs" />
+    <Compile Include="myAnimeList.cs" />
     <Compile Include="Pictures.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

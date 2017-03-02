@@ -14,6 +14,8 @@ namespace ChitoseV2
         public static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
         public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
         public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
+        public static readonly string MALUsername = Properties.Settings.Default.MALUsername;
+        public static readonly string MALPassword = Properties.Settings.Default.MALPassword; 
         private char prefix = '!';
 
         public Chitose()
@@ -34,7 +36,7 @@ namespace ChitoseV2
             client.UsingAudio(x => x.Mode = AudioMode.Outgoing);
             var music = new MusicModule(client.GetService<AudioService>());
             music.OnSongChanged += async (title) => await client.FindServers("Too Too Roo").FirstOrDefault().TextChannels.Where(channel => channel.Name == "music").FirstOrDefault().SendMessage("Now playing " + (title ?? "nothing"));
-            List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music) };
+            List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music), new MAL() };
             commandSets.ForEach(set => set.AddCommands(client, client.GetService<CommandService>()));
 
             client.ExecuteAndWait(async () =>

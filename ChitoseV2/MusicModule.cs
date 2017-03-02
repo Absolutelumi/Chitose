@@ -203,7 +203,6 @@ namespace ChitoseV2
                 string audioFile = Chitose.TempDirectory + Extensions.CleanFileName(song.Title + ".mp3");
                 var videoDownloader = new VideoDownloader(video, videoFile);
                 videoDownloader.Execute();
-                File.Delete(audioFile);
                 Process process = new Process();
                 process.StartInfo.FileName = Chitose.FfmpegPath + "ffmpeg.exe";
                 process.StartInfo.RedirectStandardOutput = true;
