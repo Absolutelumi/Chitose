@@ -15,7 +15,7 @@ namespace ChitoseV2
         public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
         public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
         public static readonly string MALUsername = Properties.Settings.Default.MALUsername;
-        public static readonly string MALPassword = Properties.Settings.Default.MALPassword; 
+        public static readonly string MALPassword = Properties.Settings.Default.MALPassword;
         private char prefix = '!';
 
         public Chitose()

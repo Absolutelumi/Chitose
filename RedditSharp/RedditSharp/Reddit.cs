@@ -1,10 +1,10 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RedditSharp.Things;
 using System;
 using System.Linq;
 using System.Net;
 using System.Security.Authentication;
-using RedditSharp.Things;
 using System.Threading.Tasks;
 using DefaultWebAgent = RedditSharp.WebAgent;
 
@@ -38,8 +38,7 @@ namespace RedditSharp
         private const string DefaultSubredditsUrl = "/subreddits/default.json";
         private const string SearchSubredditsUrl = "/subreddits/search.json?q={0}";
 
-
-        #endregion
+        #endregion Constant Urls
 
         #region Static Variables
 
@@ -51,9 +50,10 @@ namespace RedditSharp
             DefaultWebAgent.RootDomain = "www.reddit.com";
         }
 
-        #endregion
-        
+        #endregion Static Variables
+
         internal IWebAgent WebAgent { get; set; }
+
         /// <summary>
         /// Captcha solver instance to use when solving captchas.
         /// </summary>
@@ -99,10 +99,10 @@ namespace RedditSharp
             DefaultWebAgent defaultAgent = new DefaultWebAgent();
 
             JsonSerializerSettings = new JsonSerializerSettings
-                {
-                    CheckAdditionalContent = false,
-                    DefaultValueHandling = DefaultValueHandling.Ignore
-                };
+            {
+                CheckAdditionalContent = false,
+                DefaultValueHandling = DefaultValueHandling.Ignore
+            };
             DefaultWebAgent.Protocol = useSsl ? "https" : "http";
             WebAgent = defaultAgent;
             CaptchaSolver = new ConsoleCaptchaSolver();
@@ -129,6 +129,7 @@ namespace RedditSharp
             WebAgent.AccessToken = accessToken;
             InitOrUpdateUser();
         }
+
         /// <summary>
         /// Creates a Reddit instance with the given WebAgent implementation
         /// </summary>
@@ -143,6 +144,7 @@ namespace RedditSharp
             };
             CaptchaSolver = new ConsoleCaptchaSolver();
         }
+
         /// <summary>
         /// Creates a Reddit instance with the given WebAgent implementation
         /// </summary>
@@ -157,7 +159,7 @@ namespace RedditSharp
                 DefaultValueHandling = DefaultValueHandling.Ignore
             };
             CaptchaSolver = new ConsoleCaptchaSolver();
-            if(initUser) InitOrUpdateUser();
+            if (initUser) InitOrUpdateUser();
         }
 
         /// <summary>
@@ -253,7 +255,7 @@ namespace RedditSharp
         }
 
         /// <summary>
-        /// Returns the subreddit. 
+        /// Returns the subreddit.
         /// </summary>
         /// <param name="name">The name of the subreddit</param>
         /// <returns>The Subreddit by given name</returns>
@@ -296,7 +298,7 @@ namespace RedditSharp
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="subject"></param>
         /// <param name="body"></param>
@@ -441,7 +443,6 @@ namespace RedditSharp
             return new Listing<T>(this, string.Format(SearchUrl, searchQuery, sort, time), WebAgent);
         }
 
-
         #region SubredditSearching
 
         /// <summary>
@@ -493,7 +494,7 @@ namespace RedditSharp
 
         #region Helpers
 
-        protected async internal Task<T> GetThingAsync<T>(string url) where T : Thing
+        protected internal async Task<T> GetThingAsync<T>(string url) where T : Thing
         {
             var request = WebAgent.CreateGet(url);
             var response = request.GetResponse();
@@ -512,6 +513,6 @@ namespace RedditSharp
             return (T)Thing.Parse(this, json, WebAgent);
         }
 
-        #endregion
+        #endregion Helpers
     }
 }

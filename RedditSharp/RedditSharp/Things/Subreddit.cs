@@ -1,12 +1,12 @@
+using HtmlAgilityPack;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using RedditSharp.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Threading.Tasks;
-using HtmlAgilityPack;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using RedditSharp.Utils;
 
 namespace RedditSharp.Things
 {
@@ -160,9 +160,10 @@ namespace RedditSharp.Things
                 return new Listing<Post>(Reddit, string.Format(SubredditHotUrl, Name), WebAgent);
             }
         }
-        public Listing<Post> Rising 
+
+        public Listing<Post> Rising
         {
-            get 
+            get
             {
                 if (Name == "/")
                     return new Listing<Post>(Reddit, "/.json", WebAgent);
@@ -200,7 +201,7 @@ namespace RedditSharp.Things
 
             return new Listing<Post>(Reddit, string.Format(SearchUrlDate, Name, from.DateTimeToUnixTimestamp(), to.DateTimeToUnixTimestamp(), sort), WebAgent);
         }
-        
+
         public SubredditSettings Settings
         {
             get
@@ -307,7 +308,7 @@ namespace RedditSharp.Things
         {
             get
             {
-                return new Listing<Contributor>( Reddit, string.Format( ContributorsUrl, Name ), WebAgent );
+                return new Listing<Contributor>(Reddit, string.Format(ContributorsUrl, Name), WebAgent);
             }
         }
 
@@ -674,6 +675,7 @@ namespace RedditSharp.Things
                         Captcha = captchaAnswer
                     });
         }
+
         /// <summary>
         /// Gets the moderation log of the current subreddit
         /// </summary>
@@ -681,6 +683,7 @@ namespace RedditSharp.Things
         {
             return new Listing<ModAction>(Reddit, string.Format(ModLogUrl, this.Name), WebAgent);
         }
+
         /// <summary>
         /// Gets the moderation log of the current subreddit filtered by the action taken
         /// </summary>
@@ -689,6 +692,7 @@ namespace RedditSharp.Things
         {
             return new Listing<ModAction>(Reddit, string.Format(ModLogUrl + "?type={1}", Name, ModActionTypeConverter.GetRedditParamName(action)), WebAgent);
         }
+
         /// <summary>
         /// Gets the moderation log of the current subreddit filtered by moderator(s) who performed the action
         /// </summary>
@@ -697,6 +701,7 @@ namespace RedditSharp.Things
         {
             return new Listing<ModAction>(Reddit, string.Format(ModLogUrl + "?mod={1}", Name, string.Join(",", mods)), WebAgent);
         }
+
         /// <summary>
         /// Gets the moderation log of the current subreddit filtered by the action taken and moderator(s) who performed the action
         /// </summary>
@@ -707,6 +712,7 @@ namespace RedditSharp.Things
         {
             return new Listing<ModAction>(Reddit, string.Format(ModLogUrl + "?type={1}&mod={2}", Name, ModActionTypeConverter.GetRedditParamName(action), string.Join(",", mods)), WebAgent);
         }
+
         #region Obsolete Getter Methods
 
         [Obsolete("Use Posts property instead")]

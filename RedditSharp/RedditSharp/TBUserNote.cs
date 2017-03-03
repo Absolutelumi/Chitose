@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace RedditSharp
 {
@@ -17,6 +13,7 @@ namespace RedditSharp
         public string AppliesToUsername { get; set; }
         public string Url { get; set; }
         private DateTime _timestamp;
+
         public DateTime Timestamp
         {
             get { return _timestamp; }

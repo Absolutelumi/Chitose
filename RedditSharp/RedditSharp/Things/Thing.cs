@@ -1,5 +1,5 @@
-using System;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Threading.Tasks;
 
 namespace RedditSharp.Things
@@ -13,16 +13,22 @@ namespace RedditSharp.Things
             {
                 case "t1":
                     return new Comment().Init(reddit, json, webAgent, null);
+
                 case "t2":
                     return new RedditUser().Init(reddit, json, webAgent);
+
                 case "t3":
                     return new Post().Init(reddit, json, webAgent);
+
                 case "t4":
                     return new PrivateMessage().Init(reddit, json, webAgent);
+
                 case "t5":
                     return new Subreddit().Init(reddit, json, webAgent);
+
                 case "modaction":
                     return new ModAction().Init(reddit, json, webAgent);
+
                 default:
                     return null;
             }
@@ -42,7 +48,7 @@ namespace RedditSharp.Things
                 {
                     return new ModAction().Init(reddit, json, webAgent);
                 }
-                else if (typeof(T) == typeof(Contributor)) 
+                else if (typeof(T) == typeof(Contributor))
                 {
                     return new Contributor().Init(reddit, json, webAgent);
                 }
@@ -93,16 +99,22 @@ namespace RedditSharp.Things
             {
                 case "t1":
                     return await new Comment().InitAsync(reddit, json, webAgent, null);
+
                 case "t2":
                     return await new RedditUser().InitAsync(reddit, json, webAgent);
+
                 case "t3":
                     return await new Post().InitAsync(reddit, json, webAgent);
+
                 case "t4":
                     return await new PrivateMessage().InitAsync(reddit, json, webAgent);
+
                 case "t5":
                     return await new Subreddit().InitAsync(reddit, json, webAgent);
+
                 case "modaction":
                     return await new ModAction().InitAsync(reddit, json, webAgent);
+
                 default:
                     return null;
             }

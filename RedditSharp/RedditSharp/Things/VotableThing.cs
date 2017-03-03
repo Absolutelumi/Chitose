@@ -1,9 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Linq;
 using System.Security.Authentication;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Threading.Tasks;
 
 namespace RedditSharp.Things
 {
@@ -52,6 +52,7 @@ namespace RedditSharp.Things
             JsonConvert.PopulateObject(json["data"].ToString(), this, Reddit.JsonSerializerSettings);
             return this;
         }
+
         protected async Task<VotableThing> InitAsync(Reddit reddit, IWebAgent webAgent, JToken json)
         {
             CommonInit(reddit, webAgent, json);
@@ -66,15 +67,18 @@ namespace RedditSharp.Things
             WebAgent = webAgent;
         }
 
-
         [JsonProperty("downs")]
         public int Downvotes { get; set; }
+
         [JsonProperty("ups")]
         public int Upvotes { get; set; }
+
         [JsonProperty("score")]
         public int Score { get; set; }
+
         [JsonProperty("saved")]
         public bool Saved { get; set; }
+
         [JsonProperty("distinguished")]
         [JsonConverter(typeof(DistinguishConverter))]
         public DistinguishType Distinguished { get; set; }
@@ -135,7 +139,7 @@ namespace RedditSharp.Things
             if (Liked == true) Upvotes--;
             if (Liked == false) Downvotes--;
 
-            switch(type)
+            switch (type)
             {
                 case VoteType.Upvote: Liked = true; Upvotes++; return;
                 case VoteType.None: Liked = null; return;
@@ -235,12 +239,15 @@ namespace RedditSharp.Things
                 case DistinguishType.Admin:
                     how = "admin";
                     break;
+
                 case DistinguishType.Moderator:
                     how = "yes";
                     break;
+
                 case DistinguishType.None:
                     how = "no";
                     break;
+
                 default:
                     how = "special";
                     break;

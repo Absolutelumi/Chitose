@@ -1,5 +1,5 @@
+using Newtonsoft.Json.Linq;
 using System;
-using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -8,7 +8,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Web;
-using Newtonsoft.Json.Linq;
 
 namespace RedditSharp
 {
@@ -42,14 +41,17 @@ namespace RedditSharp
             /// Limits requests to one every two seconds
             /// </summary>
             Pace,
+
             /// <summary>
             /// Restricts requests to five per ten seconds
             /// </summary>
             SmallBurst,
+
             /// <summary>
             /// Restricts requests to thirty per minute
             /// </summary>
             Burst,
+
             /// <summary>
             /// Does not restrict request rate. ***NOT RECOMMENDED***
             /// </summary>
@@ -73,28 +75,30 @@ namespace RedditSharp
         private static DateTime _lastRequest;
         private static DateTime _burstStart;
         private static int _requestsThisBurst;
+
         /// <summary>
         /// UTC DateTime of last request made to Reddit API
         /// </summary>
-        public DateTime LastRequest 
+        public DateTime LastRequest
         {
             get { return _lastRequest; }
         }
+
         /// <summary>
         /// UTC DateTime of when the last burst started
         /// </summary>
-        public DateTime BurstStart 
+        public DateTime BurstStart
         {
             get { return _burstStart; }
         }
+
         /// <summary>
-        /// Number of requests made during the current burst 
+        /// Number of requests made during the current burst
         /// </summary>
-        public int RequestsThisBurst 
+        public int RequestsThisBurst
         {
             get { return _requestsThisBurst; }
         }
-
 
         public virtual JToken CreateAndExecuteRequest(string url)
         {
@@ -165,7 +169,6 @@ namespace RedditSharp
                 json = JToken.Parse("{'method':'" + response.Method + "','uri':'" + response.ResponseUri.AbsoluteUri + "','status':'" + response.StatusCode.ToString() + "'}");
             }
             return json;
-
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
@@ -178,6 +181,7 @@ namespace RedditSharp
                         Thread.Sleep(250);
                     _lastRequest = DateTime.UtcNow;
                     break;
+
                 case RateLimitMode.SmallBurst:
                     if (_requestsThisBurst == 0 || (DateTime.UtcNow - _burstStart).TotalSeconds >= 10) //this is first request OR the burst expired
                     {
@@ -194,6 +198,7 @@ namespace RedditSharp
                     _lastRequest = DateTime.UtcNow;
                     _requestsThisBurst++;
                     break;
+
                 case RateLimitMode.Burst:
                     if (_requestsThisBurst == 0 || (DateTime.UtcNow - _burstStart).TotalSeconds >= 60) //this is first request OR the burst expired
                     {

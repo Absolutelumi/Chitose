@@ -1,7 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Linq;
 using RedditSharp.Things;
+using System.Collections.Generic;
 
 namespace RedditSharp
 {
@@ -61,6 +60,7 @@ namespace RedditSharp
         }
 
         #region Settings
+
         public WikiPageSettings GetPageSettings(string name)
         {
             var request = WebAgent.CreateGet(string.Format(WikiPageSettingsUrl, Subreddit.Name, name));
@@ -82,7 +82,8 @@ namespace RedditSharp
             });
             var response = request.GetResponse();
         }
-        #endregion
+
+        #endregion Settings
 
         #region Revisions
 
@@ -90,36 +91,39 @@ namespace RedditSharp
         {
             return new Listing<WikiPageRevision>(Reddit, string.Format(WikiPageRevisionsUrl, Subreddit.Name, page), WebAgent);
         }
-        #endregion
+
+        #endregion Revisions
 
         #region Discussions
+
         public Listing<Post> GetPageDiscussions(string page)
         {
             return new Listing<Post>(Reddit, string.Format(WikiPageDiscussionsUrl, Subreddit.Name, page), WebAgent);
         }
-        #endregion
+
+        #endregion Discussions
 
         public void EditPage(string page, string content, string previous = null, string reason = null)
         {
             var request = WebAgent.CreatePost(string.Format(WikiPageEditUrl, Subreddit.Name));
-            dynamic param = new 
+            dynamic param = new
             {
                 content = content,
                 page = page,
                 uh = Reddit.User.Modhash
             };
             List<string> addParams = new List<string>();
-            if (previous != null) 
+            if (previous != null)
             {
                 addParams.Add("previous");
                 addParams.Add(previous);
             }
-            if (reason != null) 
+            if (reason != null)
             {
                 addParams.Add("reason");
                 addParams.Add(reason);
             }
-            WebAgent.WritePostBody(request.GetRequestStream(), param,addParams.ToArray());
+            WebAgent.WritePostBody(request.GetRequestStream(), param, addParams.ToArray());
             var response = request.GetResponse();
         }
 

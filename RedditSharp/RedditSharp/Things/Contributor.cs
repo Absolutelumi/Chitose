@@ -1,10 +1,10 @@
-﻿using System;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 
-namespace RedditSharp.Things 
+namespace RedditSharp.Things
 {
-    public class Contributor : Thing 
+    public class Contributor : Thing
     {
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -13,14 +13,14 @@ namespace RedditSharp.Things
         [JsonConverter(typeof(UnixTimestampConverter))]
         public DateTime DateAdded { get; set; }
 
-        public Contributor Init(Reddit reddit, JToken json, IWebAgent webAgent) 
+        public Contributor Init(Reddit reddit, JToken json, IWebAgent webAgent)
         {
             CommonInit(json);
             JsonConvert.PopulateObject(json.ToString(), this, reddit.JsonSerializerSettings);
             return this;
         }
 
-        private void CommonInit(JToken json) 
+        private void CommonInit(JToken json)
         {
             base.Init(json);
         }

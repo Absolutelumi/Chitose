@@ -1,16 +1,12 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RedditSharp.Things
 {
     public class ModAction : Thing
     {
-
         [JsonProperty("action")]
         [JsonConverter(typeof(ModActionTypeConverter))]
         public ModActionType Action { get; set; }
@@ -64,6 +60,7 @@ namespace RedditSharp.Things
             JsonConvert.PopulateObject(json["data"].ToString(), this, reddit.JsonSerializerSettings);
             return this;
         }
+
         public async Task<ModAction> InitAsync(Reddit reddit, JToken post, IWebAgent webAgent)
         {
             CommonInit(reddit, post, webAgent);
@@ -77,6 +74,5 @@ namespace RedditSharp.Things
             Reddit = reddit;
             WebAgent = webAgent;
         }
-
     }
 }

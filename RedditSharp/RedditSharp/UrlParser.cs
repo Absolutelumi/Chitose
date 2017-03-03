@@ -4,7 +4,7 @@ using System;
 
 namespace RedditSharp
 {
-    class UrlParser : JsonConverter
+    internal class UrlParser : JsonConverter
     {
         public override bool CanConvert(Type objectType)
         {
