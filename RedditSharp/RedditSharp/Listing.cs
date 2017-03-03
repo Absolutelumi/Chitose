@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
+using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
-using RedditSharp.Things;
 
 namespace RedditSharp
 {
@@ -116,6 +116,7 @@ namespace RedditSharp
         }
 
 #pragma warning disable 0693
+
         private class ListingEnumerator<T> : IEnumerator<T> where T : Thing
         {
             private Listing<T> Listing { get; set; }
@@ -140,13 +141,13 @@ namespace RedditSharp
                 CurrentPage = new Thing[0];
 
                 // Set the listings per page (if not specified, use the Reddit default of 25) and the maximum listings
-                LimitPerRequest = (limitPerRequest <= 0 ? DefaultListingPerRequest : limitPerRequest); 
+                LimitPerRequest = (limitPerRequest <= 0 ? DefaultListingPerRequest : limitPerRequest);
                 MaximumLimit = maximumLimit;
             }
 
             public T Current
             {
-                get 
+                get
                 {
                     return (T)CurrentPage[CurrentPageIndex];
                 }
@@ -186,7 +187,7 @@ namespace RedditSharp
                 if (Count > 0)
                 {
                     // Add the count, the number of items already seen in this listing
-                    // The Reddit API uses this to determine when to give values for before and after fields                
+                    // The Reddit API uses this to determine when to give values for before and after fields
                     url += (url.Contains("?") ? "&" : "?") + "count=" + Count;
                 }
 
@@ -203,7 +204,7 @@ namespace RedditSharp
             {
                 var children = json["data"]["children"] as JArray;
                 CurrentPage = new Thing[children.Count];
-                
+
                 for (int i = 0; i < CurrentPage.Length; i++)
                     CurrentPage[i] = Thing.Parse<T>(Listing.Reddit, children[i], Listing.WebAgent);
 
@@ -261,6 +262,7 @@ namespace RedditSharp
                 CurrentPage = new Thing[0];
             }
         }
+
 #pragma warning restore
     }
 }

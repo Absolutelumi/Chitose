@@ -14,7 +14,6 @@ namespace RedditSharp
         /// </summary>
         public RedditException()
         {
-        
         }
 
         /// <summary>
@@ -24,7 +23,6 @@ namespace RedditSharp
         public RedditException(string message)
             : base(message)
         {
-
         }
 
         /// <summary>
@@ -37,7 +35,6 @@ namespace RedditSharp
         public RedditException(string message, Exception inner)
             : base(message, inner)
         {
-            
         }
 
         /// <summary>
@@ -53,7 +50,6 @@ namespace RedditSharp
         protected RedditException(SerializationInfo info, StreamingContext context)
             : base(info, context)
         {
-
         }
     }
 }

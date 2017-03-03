@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
-using System.Web;
+﻿using Newtonsoft.Json.Linq;
 using RedditSharp.Things;
+using System.Collections.Generic;
+using System.Web;
 
 namespace RedditSharp
 {
@@ -60,14 +60,14 @@ namespace RedditSharp
             var request = WebAgent.CreatePost(UploadImageUrl);
             var formData = new MultipartFormBuilder(request);
             formData.AddDynamic(new
-                {
-                    name,
-                    uh = Reddit.User.Modhash,
-                    r = Subreddit.Name,
-                    formid = "image-upload",
-                    img_type = imageType == ImageType.PNG ? "png" : "jpg",
-                    upload = ""
-                });
+            {
+                name,
+                uh = Reddit.User.Modhash,
+                r = Subreddit.Name,
+                formid = "image-upload",
+                img_type = imageType == ImageType.PNG ? "png" : "jpg",
+                upload = ""
+            });
             formData.AddFile("file", "foo.png", file, imageType == ImageType.PNG ? "image/png" : "image/jpeg");
             formData.Finish();
             var response = request.GetResponse();

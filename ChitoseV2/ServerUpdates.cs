@@ -1,6 +1,5 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.Legacy;
 using System.Linq;
 
 namespace ChitoseV2
@@ -44,7 +43,7 @@ namespace ChitoseV2
                     {
                         music.Leave();
                     }
-                } 
+                }
             };
 
             client.UserBanned += async (s, e) =>

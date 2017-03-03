@@ -1,7 +1,7 @@
-﻿using System.Web;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RedditSharp.Things;
+using System.Web;
 
 namespace RedditSharp
 {
@@ -69,9 +69,11 @@ namespace RedditSharp
                     case "disabled":
                         WikiEditMode = WikiEditMode.None;
                         break;
+
                     case "modonly":
                         WikiEditMode = WikiEditMode.Moderators;
                         break;
+
                     case "anyone":
                         WikiEditMode = WikiEditMode.All;
                         break;
@@ -85,9 +87,11 @@ namespace RedditSharp
                     case "public":
                         SubredditType = SubredditType.Public;
                         break;
+
                     case "private":
                         SubredditType = SubredditType.Private;
                         break;
+
                     case "restricted":
                         SubredditType = SubredditType.Restricted;
                         break;
@@ -103,9 +107,11 @@ namespace RedditSharp
                     case "any":
                         ContentOptions = ContentOptions.All;
                         break;
+
                     case "link":
                         ContentOptions = ContentOptions.LinkOnly;
                         break;
+
                     case "self":
                         ContentOptions = ContentOptions.SelfOnly;
                         break;
@@ -143,9 +149,11 @@ namespace RedditSharp
                 case ContentOptions.All:
                     link_type = "any";
                     break;
+
                 case ContentOptions.LinkOnly:
                     link_type = "link";
                     break;
+
                 default:
                     link_type = "self";
                     break;
@@ -155,9 +163,11 @@ namespace RedditSharp
                 case SubredditType.Public:
                     type = "public";
                     break;
+
                 case SubredditType.Private:
                     type = "private";
                     break;
+
                 default:
                     type = "restricted";
                     break;
@@ -167,9 +177,11 @@ namespace RedditSharp
                 case WikiEditMode.All:
                     wikimode = "anyone";
                     break;
+
                 case WikiEditMode.Moderators:
                     wikimode = "modonly";
                     break;
+
                 default:
                     wikimode = "disabled";
                     break;
@@ -220,14 +232,17 @@ namespace RedditSharp
 
         private SpamFilterStrength GetSpamFilterStrength(string rawValue)
         {
-            switch(rawValue)
+            switch (rawValue)
             {
                 case "low":
                     return SpamFilterStrength.Low;
+
                 case "high":
                     return SpamFilterStrength.High;
+
                 case "all":
                     return SpamFilterStrength.All;
+
                 default:
                     return SpamFilterStrength.High;
             }

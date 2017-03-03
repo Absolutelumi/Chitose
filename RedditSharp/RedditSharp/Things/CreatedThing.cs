@@ -1,7 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Threading.Tasks;
 
 namespace RedditSharp.Things
 {
@@ -15,6 +15,7 @@ namespace RedditSharp.Things
             JsonConvert.PopulateObject(json["data"].ToString(), this, reddit.JsonSerializerSettings);
             return this;
         }
+
         protected async Task<CreatedThing> InitAsync(Reddit reddit, JToken json)
         {
             CommonInit(reddit, json);
@@ -27,7 +28,6 @@ namespace RedditSharp.Things
             base.Init(json);
             Reddit = reddit;
         }
-
 
         [JsonProperty("created")]
         [JsonConverter(typeof(UnixTimestampConverter))]

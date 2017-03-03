@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Authentication;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace RedditSharp.Things
 {
@@ -20,6 +20,7 @@ namespace RedditSharp.Things
 
         [JsonIgnore]
         private Reddit Reddit { get; set; }
+
         [JsonIgnore]
         private IWebAgent WebAgent { get; set; }
 
@@ -30,6 +31,7 @@ namespace RedditSharp.Things
             JsonConvert.PopulateObject(data.ToString(), this, reddit.JsonSerializerSettings);
             return this;
         }
+
         public async Task<Comment> InitAsync(Reddit reddit, JToken json, IWebAgent webAgent, Thing sender)
         {
             var data = CommonInit(reddit, json, webAgent, sender);
@@ -52,7 +54,7 @@ namespace RedditSharp.Things
                 var context = data["context"].Value<string>();
                 LinkId = context.Split('/')[4];
             }
-         
+
             return data;
         }
 
@@ -79,33 +81,45 @@ namespace RedditSharp.Things
                 foreach (var comment in replies["data"]["children"])
                     subComments.Add(await new Comment().InitAsync(reddit, comment, webAgent, sender));
             }
-            Comments = subComments.ToArray();            
+            Comments = subComments.ToArray();
         }
 
         [JsonProperty("author")]
         public string Author { get; set; }
+
         [JsonProperty("banned_by")]
         public string BannedBy { get; set; }
+
         [JsonProperty("body")]
         public string Body { get; set; }
+
         [JsonProperty("body_html")]
         public string BodyHtml { get; set; }
+
         [JsonProperty("parent_id")]
         public string ParentId { get; set; }
+
         [JsonProperty("subreddit")]
         public string Subreddit { get; set; }
+
         [JsonProperty("approved_by")]
         public string ApprovedBy { get; set; }
+
         [JsonProperty("author_flair_css_class")]
         public string AuthorFlairCssClass { get; set; }
+
         [JsonProperty("author_flair_text")]
         public string AuthorFlairText { get; set; }
+
         [JsonProperty("gilded")]
         public int Gilded { get; set; }
+
         [JsonProperty("link_id")]
         public string LinkId { get; set; }
+
         [JsonProperty("link_title")]
         public string LinkTitle { get; set; }
+
         [JsonProperty("num_reports")]
         public int? NumReports { get; set; }
 
@@ -167,7 +181,7 @@ namespace RedditSharp.Things
         /// <summary>
         /// Replaces the text in this comment with the input text.
         /// </summary>
-        /// <param name="newText">The text to replace the comment's contents</param>        
+        /// <param name="newText">The text to replace the comment's contents</param>
         public void EditText(string newText)
         {
             if (Reddit.User == null)
@@ -241,11 +255,11 @@ namespace RedditSharp.Things
         {
             var request = WebAgent.CreatePost(SetAsReadUrl);
             WebAgent.WritePostBody(request.GetRequestStream(), new
-                                 {
-                                     id = FullName,
-                                     uh = Reddit.User.Modhash,
-                                     api_type = "json"
-                                 });
+            {
+                id = FullName,
+                uh = Reddit.User.Modhash,
+                api_type = "json"
+            });
             var response = request.GetResponse();
             var data = WebAgent.GetResponseString(response.GetResponseStream());
         }

@@ -1,16 +1,15 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
-using Newtonsoft.Json.Linq;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO.Compression;
+using System.Linq;
 
 namespace RedditSharp
 {
     public static class ToolBoxUserNotes
     {
         private const string ToolBoxUserNotesWiki = "/r/{0}/wiki/usernotes";
+
         public static IEnumerable<TBUserNote> GetUserNotes(IWebAgent webAgent, string subName)
         {
             var request = webAgent.CreateGet(String.Format(ToolBoxUserNotesWiki, subName));
@@ -39,7 +38,6 @@ namespace RedditSharp
                         {
                             uncompressed = decompressedReader.ReadToEnd();
                         }
-
                     }
                 }
 
@@ -51,7 +49,6 @@ namespace RedditSharp
                     var x = user.Value;
                     foreach (JToken note in x["ns"].Children())
                     {
-
                         TBUserNote uNote = new TBUserNote();
                         uNote.AppliesToUsername = user.Key;
                         uNote.SubName = subName;
@@ -73,6 +70,7 @@ namespace RedditSharp
                 throw new ToolBoxUserNotesException("An error occured while processing Usernotes wiki. See inner exception for details", e);
             }
         }
+
         public static string UnsquashLink(string subreddit, string permalink)
         {
             var link = "https://reddit.com/r/" + subreddit + "/";

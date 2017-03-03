@@ -2,6 +2,7 @@
 using Discord.Commands;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 
 namespace ChitoseV2
@@ -38,6 +39,40 @@ namespace ChitoseV2
                 await e.Channel.SendFile(Chitose.TempDirectory + e.GetArg("user") + "Signature.png");
 
                 File.Delete(Chitose.TempDirectory + e.GetArg("user") + "Signature.png");
+            });
+
+            commands.CreateGroup("purge", cgb =>
+            {
+                commands.CreateCommand("purge").Do(async (e) =>
+                {
+                    Message[] chanMessages = e.Channel.Messages.Take(50).ToArray();
+
+                    await e.Channel.DeleteMessages(chanMessages);
+
+                    await e.Channel.SendMessage("Messages purged! :skull:");
+                });
+
+                commands.CreateCommand("purge").Parameter("user").Do(async (e) =>
+                {
+                    string user = e.GetArg("user");
+
+                    if(user[0] == '@')
+                    {
+                        Message[] userMessages = e.Channel.Messages.Take(50).Where(messages => e.Message.User.Id == ulong.Parse(user.Substring(1))).ToArray();
+
+                        await e.Channel.DeleteMessages(userMessages);
+
+                        await e.Channel.SendMessage(string.Format("Messages purged! :skull:", user));
+                    }
+                    else
+                    {
+                        Message[] userMessages = e.Channel.Messages.Where(message => message.User.Name == user).ToArray();
+
+                        await e.Channel.DeleteMessages(userMessages);
+
+                        await e.Channel.SendMessage(string.Format("Messages purged! :skull:", user));
+                    }
+                });
             });
         }
     }

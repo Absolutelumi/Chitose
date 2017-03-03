@@ -1,21 +1,21 @@
-﻿using System;
-using System.Linq;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Linq;
 
 namespace RedditSharp
 {
     [Flags]
     public enum ModeratorPermission
     {
-        None   = 0x00,
+        None = 0x00,
         Access = 0x01,
         Config = 0x02,
-        Flair  = 0x04,
-        Mail   = 0x08,
-        Posts  = 0x10,
-        Wiki   = 0x20,
-        All    = Access | Config | Flair | Mail | Posts | Wiki
+        Flair = 0x04,
+        Mail = 0x08,
+        Posts = 0x10,
+        Wiki = 0x20,
+        All = Access | Config | Flair | Mail | Posts | Wiki
     }
 
     internal class ModeratorPermissionConverter : JsonConverter
@@ -43,7 +43,7 @@ namespace RedditSharp
         {
             // NOTE: Not sure if this is what is supposed to be returned
             // This method wasn't called in my (Sharparam) tests so unsure what it does
-            return objectType == typeof (ModeratorPermission);
+            return objectType == typeof(ModeratorPermission);
         }
     }
 }

@@ -1,7 +1,7 @@
-using System;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Threading.Tasks;
 
 namespace RedditSharp.Things
 {
@@ -23,6 +23,7 @@ namespace RedditSharp.Things
                 reddit.JsonSerializerSettings);
             return this;
         }
+
         public async Task<RedditUser> InitAsync(Reddit reddit, JToken json, IWebAgent webAgent)
         {
             CommonInit(reddit, json, webAgent);

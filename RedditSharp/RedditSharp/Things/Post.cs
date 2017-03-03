@@ -1,11 +1,11 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Threading.Tasks;
 using System.Web;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace RedditSharp.Things
 {
@@ -37,6 +37,7 @@ namespace RedditSharp.Things
             JsonConvert.PopulateObject(post["data"].ToString(), this, reddit.JsonSerializerSettings);
             return this;
         }
+
         public async Task<Post> InitAsync(Reddit reddit, JToken post, IWebAgent webAgent)
         {
             CommonInit(reddit, post, webAgent);
@@ -150,12 +151,12 @@ namespace RedditSharp.Things
             var request = WebAgent.CreatePost(CommentUrl);
             var stream = request.GetRequestStream();
             WebAgent.WritePostBody(stream, new
-                {
-                    text = message,
-                    thing_id = FullName,
-                    uh = Reddit.User.Modhash,
-                    api_type = "json"
-                });
+            {
+                text = message,
+                thing_id = FullName,
+                uh = Reddit.User.Modhash,
+                api_type = "json"
+            });
             stream.Close();
             var response = request.GetResponse();
             var data = WebAgent.GetResponseString(response.GetResponseStream());
@@ -192,7 +193,7 @@ namespace RedditSharp.Things
             if (requiresModAction && !modNameList.Contains(Reddit.User.Name))
                 throw new AuthenticationException(
                     String.Format(
-                        @"User {0} is not a moderator of subreddit {1}.", 
+                        @"User {0} is not a moderator of subreddit {1}.",
                         Reddit.User.Name,
                         this.Subreddit.Name));
 
@@ -312,6 +313,7 @@ namespace RedditSharp.Things
             else
                 throw new Exception("Error editing text.");
         }
+
         public void Update()
         {
             JToken post = Reddit.GetToken(this.Url);
@@ -323,7 +325,7 @@ namespace RedditSharp.Things
             if (Reddit.User == null)
                 throw new Exception("No user logged in.");
 
-            var request = WebAgent.CreatePost(string.Format(SetFlairUrl,SubredditName));
+            var request = WebAgent.CreatePost(string.Format(SetFlairUrl, SubredditName));
             WebAgent.WritePostBody(request.GetRequestStream(), new
             {
                 api_type = "json",

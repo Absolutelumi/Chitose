@@ -54,6 +54,7 @@ namespace RedditSharp
             if (action == ModActionType.LockPost) return "lock";
             else return action.ToString("g").ToLower();
         }
+
         public override bool CanConvert(Type objectType)
         {
             return objectType == typeof(ModActionType);
@@ -70,13 +71,12 @@ namespace RedditSharp
             {
                 return Enum.Parse(typeof(ModActionType), value, true);
             }
-
         }
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             if (value == null) writer.WriteNull();
-            else writer.WriteValue(GetRedditParamName((ModActionType) value));
+            else writer.WriteValue(GetRedditParamName((ModActionType)value));
         }
     }
 }

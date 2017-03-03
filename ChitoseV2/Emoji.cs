@@ -1,8 +1,5 @@
 ﻿using Discord;
 using Discord.Commands;
-using System;
-using System.IO;
-using System.Net;
 
 namespace ChitoseV2
 {

@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Authentication;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace RedditSharp.Things
 {
@@ -91,6 +91,7 @@ namespace RedditSharp.Things
             JsonConvert.PopulateObject(json["data"].ToString(), this, reddit.JsonSerializerSettings);
             return this;
         }
+
         public async Task<PrivateMessage> InitAsync(Reddit reddit, JToken json, IWebAgent webAgent)
         {
             CommonInit(reddit, json, webAgent);
@@ -127,7 +128,7 @@ namespace RedditSharp.Things
             return Thread;
         }
 
-        #endregion Obsolete Gettter Methods
+        #endregion Obsolete Getter Methods
 
         public void SetAsRead()
         {

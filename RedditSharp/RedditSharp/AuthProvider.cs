@@ -1,9 +1,9 @@
+using Newtonsoft.Json.Linq;
+using RedditSharp.Things;
 using System;
 using System.Net;
 using System.Security.Authentication;
 using System.Text;
-using Newtonsoft.Json.Linq;
-using RedditSharp.Things;
 
 namespace RedditSharp
 {
@@ -40,6 +40,7 @@ namespace RedditSharp
             wikiedit = 0x20000,
             wikiread = 0x40000
         }
+
         private IWebAgent _webAgent;
         private readonly string _redirectUri;
         private readonly string _clientId;
@@ -58,6 +59,7 @@ namespace RedditSharp
             _redirectUri = redirectUri;
             _webAgent = new WebAgent();
         }
+
         /// <summary>
         /// Allows use of reddit's OAuth interface, using an app set up at https://ssl.reddit.com/prefs/apps/.
         /// </summary>
@@ -65,7 +67,7 @@ namespace RedditSharp
         /// <param name="clientSecret">Granted by reddit as part of app.</param>
         /// <param name="redirectUri">Selected as part of app. Reddit will send users back here.</param>
         /// <param name="agent">Implementation of IWebAgent to use to make requests.</param>
-        public AuthProvider(string clientId, string clientSecret, string redirectUri,IWebAgent agent)
+        public AuthProvider(string clientId, string clientSecret, string redirectUri, IWebAgent agent)
         {
             _clientId = clientId;
             _clientSecret = clientSecret;
@@ -74,7 +76,7 @@ namespace RedditSharp
         }
 
         /// <summary>
-        /// Creates the reddit OAuth2 Url to redirect the user to for authorization. 
+        /// Creates the reddit OAuth2 Url to redirect the user to for authorization.
         /// </summary>
         /// <param name="state">Used to verify that the user received is the user that was sent</param>
         /// <param name="scope">Determines what actions can be performed against the user.</param>
@@ -82,7 +84,7 @@ namespace RedditSharp
         /// <returns></returns>
         public string GetAuthUrl(string state, Scope scope, bool permanent = false)
         {
-            return String.Format("https://ssl.reddit.com/api/v1/authorize?client_id={0}&response_type=code&state={1}&redirect_uri={2}&duration={3}&scope={4}", _clientId, state, _redirectUri, permanent ? "permanent" : "temporary", scope.ToString().Replace(" ",""));
+            return String.Format("https://ssl.reddit.com/api/v1/authorize?client_id={0}&response_type=code&state={1}&redirect_uri={2}&duration={3}&scope={4}", _clientId, state, _redirectUri, permanent ? "permanent" : "temporary", scope.ToString().Replace(" ", ""));
         }
 
         /// <summary>
@@ -168,7 +170,7 @@ namespace RedditSharp
             }
             throw new AuthenticationException("Could not log in.");
         }
-		
+
         public void RevokeToken(string token, bool isRefresh)
         {
             string tokenType = isRefresh ? "refresh_token" : "access_token";
@@ -187,8 +189,8 @@ namespace RedditSharp
             stream.Close();
 
             _webAgent.ExecuteRequest(request);
-
         }
+
         /// <summary>
         /// Gets a user authenticated by OAuth2.
         /// </summary>
