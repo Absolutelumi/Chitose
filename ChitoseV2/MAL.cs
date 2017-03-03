@@ -20,7 +20,7 @@ namespace ChitoseV2
             commands.CreateCommand("anime").Parameter("animename", ParameterType.Multiple).Do(async (e) =>
             {
                 string tempdir = Chitose.TempDirectory + title + " Pic.png";
-                Regex tags = new Regex("<.*>");
+                Regex tags = new Regex("<.*>|\\[/?i\\]");
 
                 title = string.Join(" ", e.Args);
                 myAnimeList.AnimeResult anime = myAnimeList.FindMyAnime(title, Chitose.MALUsername, Chitose.MALPassword);

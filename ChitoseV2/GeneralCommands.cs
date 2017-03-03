@@ -56,9 +56,9 @@ namespace ChitoseV2
                 {
                     string user = e.GetArg("user");
 
-                    if(user[0] == '@')
+                    if(user[1] == '@')
                     {
-                        Message[] userMessages = e.Channel.Messages.Take(50).Where(messages => e.Message.User.Id == ulong.Parse(user.Substring(1))).ToArray();
+                        Message[] userMessages = e.Channel.Messages.Take(50).Where(messages => e.Message.User.Id == ulong.Parse(user.Substring(2, user.Length - 3))).ToArray();
 
                         await e.Channel.DeleteMessages(userMessages);
 
@@ -66,7 +66,7 @@ namespace ChitoseV2
                     }
                     else
                     {
-                        Message[] userMessages = e.Channel.Messages.Where(message => message.User.Name == user).ToArray();
+                        Message[] userMessages = e.Channel.Messages.Where(message => message.User.Name.ToLowerInvariant() == user.ToLowerInvariant()).ToArray();
 
                         await e.Channel.DeleteMessages(userMessages);
 
