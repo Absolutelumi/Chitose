@@ -23,7 +23,7 @@ namespace ChitoseV2
                 {
                     if (gameStart == true)
                     {
-                        await e.Channel.SendMessage("Game is already in place! Please use '!hangman end' if you wish to end current game.");
+                        await e.Channel.SendMessage("Game is already in place! Please use '!end' if you wish to end current game.");
                     }
                     else
                     {

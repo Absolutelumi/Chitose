@@ -183,6 +183,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\PixivApiWrapper.Net-master\PixivAPIWrapper\PixivAPIWrapper.csproj">
+      <Project>{39B8C718-0E04-4D8C-A7C4-A60CC99B6833}</Project>
+      <Name>PixivAPIWrapper</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RedditSharp\RedditSharp\RedditSharp.csproj">
       <Project>{a368cb75-75f0-4489-904d-b5cebb0fe624}</Project>
       <Name>RedditSharp</Name>
