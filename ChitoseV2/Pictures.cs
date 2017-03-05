@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Mayushii.Services;
-using PixivLib;
 using RedditSharp;
 using System;
 using System.IO;
