@@ -1,0 +1,9 @@
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+[Bb]in
+[Oo]bj
+.vs
+*.[Cc]ache

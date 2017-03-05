@@ -1,8 +1,7 @@
 ﻿using Discord;
 using Discord.Commands;
 using Mayushii.Services;
-using PixivAPIWrapper;
-using PixivAPIWrapper.Model; 
+using PixivLib;
 using RedditSharp;
 using System;
 using System.IO;
@@ -47,24 +46,7 @@ namespace ChitoseV2
 
             commands.CreateCommand("pixiv").Parameter("keyword", ParameterType.Multiple).Do(async (e) =>
             {
-                PixivAPI api;
-                Random random = new Random(); 
-
-                api = new PixivAPI();
-                api.Login(Chitose.PixivEmail, Chitose.PixivPassword);
-
-                string keyword = string.Join(" ", e.Args); 
-                string tempdir = Chitose.TempDirectory + keyword + ".png"; 
-
-                Illustration[] images = api.FindImagesByTitle(keyword, 50);
-                Uri image = images[random.Next(0, 50)].ImageURL;
-
-                using (WebClient downloadclient = new WebClient())
-                {
-                    downloadclient.DownloadFile(new Uri(image.ToString()), tempdir);
-                }
-
-                await e.Channel.SendFile(tempdir); 
+                throw new NotImplementedException(); 
             }); 
         }
     }
