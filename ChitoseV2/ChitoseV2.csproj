@@ -183,10 +183,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PixivLib-master\Source\PixivLib.csproj">
-      <Project>{94636450-26f4-4f53-a218-fd7ade03596b}</Project>
-      <Name>PixivLib</Name>
-    </ProjectReference>
     <ProjectReference Include="..\RedditSharp\RedditSharp\RedditSharp.csproj">
       <Project>{a368cb75-75f0-4489-904d-b5cebb0fe624}</Project>
       <Name>RedditSharp</Name>

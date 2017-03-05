@@ -11,6 +11,8 @@ namespace ChitoseV2
 {
     internal class Chitose
     {
+        Random random = new Random(); 
+
         public static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
         public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
         public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
@@ -41,10 +43,12 @@ namespace ChitoseV2
             List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music), new MAL() , new Pictures()};
             commandSets.ForEach(set => set.AddCommands(client, client.GetService<CommandService>()));
 
+            string[] playing = { "with lolis～", "with hvick225", "csgo with snax", "life", "osu!", "killing myself", "circle smash", "kancolle" };
+
             client.ExecuteAndWait(async () =>
             {
                 await client.Connect(new StreamReader(File.OpenRead(ConfigDirectory + "token.txt")).ReadToEnd(), TokenType.Bot);
-                client.SetGame("with lolis～");
+                client.SetGame(playing[random.Next(0, playing.Length)]);
             });
         }
     }
