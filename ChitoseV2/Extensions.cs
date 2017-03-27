@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 
 namespace ChitoseV2
 {
@@ -27,6 +28,18 @@ namespace ChitoseV2
         public static string ToTitleCase(this string text)
         {
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text);
+        }
+
+        public static string DownloadFile(string url)
+        {
+            string FilePath = Chitose.TempDirectory + "Temp" + ".png"; 
+
+            using (WebClient downloadclient = new WebClient())
+            {
+                downloadclient.DownloadFile(new Uri(url), Chitose.TempDirectory);
+            }
+
+            return FilePath; 
         }
     }
 }
