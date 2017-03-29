@@ -21,6 +21,8 @@ namespace ChitoseV2
         public static readonly string MALPassword = Properties.Settings.Default.MALPassword;
         public static readonly string NSFWPath = Properties.Settings.Default.NSFWPath;
         public static readonly string APIKey = Properties.Settings.Default.APIKey;
+        public static readonly string ImgurKey = Properties.Settings.Default.ImgurKey;
+        public static readonly string ImgurSecret = Properties.Settings.Default.ImgurSecret; 
         private char prefix = '!';
 
         public Chitose()

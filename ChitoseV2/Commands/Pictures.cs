@@ -26,10 +26,11 @@ namespace ChitoseV2
         {
             #region API Variables
             var reddit = new Reddit();
-            var ImgClient = new ImgurClient("c78392a95466b85", "499350b2c5dff500da481771f9a35497c395e41e");
+            var ImgClient = new ImgurClient(Chitose.ImgurKey, Chitose.ImgurSecret);
             var endpoint = new AccountEndpoint(ImgClient);
             #endregion
 
+            #region General
             commands.CreateCommand("reddit").Parameter("subreddit").Do(async (e) =>
             {
                 var subreddit = reddit.GetSubreddit(e.GetArg("subreddit"));
@@ -57,6 +58,7 @@ namespace ChitoseV2
 
                 File.Delete(temppath);
             });
+            #endregion
 
             #region NSFW Commands
             commands.CreateCommand("i").Do(async (e) =>
@@ -99,40 +101,27 @@ namespace ChitoseV2
                 commands.CreateCommand("tint").Parameter("color/picture", ParameterType.Multiple).Do(async (e) =>
                 {
                     string color = e.Args[0];
-                    string picture = e.Args[1]; 
-                    bool completed = true; 
+                    string picture = e.Args[1];
 
                     string ImagePath = Extensions.DownloadFile(picture);
 
-                    switch (color)
-                    {
-                        case "red":
-                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.Red);
-                            break;
-                        case "blue":
-                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.Blue);
-                            break;
-                        case "pink":
-                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.Pink);
-                            break;
-                        case "hotpink":
-                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.HotPink);
-                            break; 
-                        default:
-                            await e.Channel.SendMessage(string.Format("The color {0} is not available!", color));
-                            completed = false;
-                            File.Delete(ImagePath); 
-                            break;
-                    }
-
-                    if(completed == true)
-                    {
-                        Imagefactory.Save(ImagePath);
-                        await e.Channel.SendFile(ImagePath);
-                        File.Delete(ImagePath);
-                    } 
+                    Imagefactory.Tint(System.Drawing.Color.FromName(color)).Save(ImagePath);
+                    await e.Channel.SendFile(ImagePath);
+                    File.Delete(ImagePath);
                 });
 
+                commands.CreateCommand("replacecolor").Parameter("targetCol/replaceCol/Image", ParameterType.Multiple).Do(async (e) =>
+                {
+                    string targetCol = e.Args[0];
+                    string replaceCol = e.Args[1];
+                    string Imagelink = e.Args[2];
+
+                    string Imagepath = Extensions.DownloadFile(Imagelink);
+
+                    Imagefactory.Load(Imagepath).ReplaceColor(System.Drawing.Color.FromName(targetCol), System.Drawing.Color.FromName(replaceCol)).Save(Imagepath);
+
+                    await e.Channel.SendFile(Imagepath); 
+                });
             }
             #endregion
         }
