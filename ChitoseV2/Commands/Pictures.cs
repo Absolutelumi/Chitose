@@ -6,26 +6,29 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Imgur;
 using Imgur.API.Authentication.Impl;
 using Imgur.API.Endpoints.Impl;
+using ImageProcessor;
 
 namespace ChitoseV2
 {
     internal class Pictures : CommandSet
     {
+        #region Extra Methods
         string RandomAlbum()
         {
             string[] ImgurAlbums = File.ReadAllLines(Chitose.NSFWPath); 
             return ImgurAlbums.Random(); 
         }
+        #endregion
 
         public void AddCommands(DiscordClient client, CommandService commands)
         {
+            #region API Variables
             var reddit = new Reddit();
-
             var ImgClient = new ImgurClient("c78392a95466b85", "499350b2c5dff500da481771f9a35497c395e41e");
-            var endpoint = new AccountEndpoint(ImgClient); 
+            var endpoint = new AccountEndpoint(ImgClient);
+            #endregion
 
             commands.CreateCommand("reddit").Parameter("subreddit").Do(async (e) =>
             {
@@ -55,7 +58,7 @@ namespace ChitoseV2
                 File.Delete(temppath);
             });
 
-            /* NSFW Commands */
+            #region NSFW Commands
             commands.CreateCommand("i").Do(async (e) =>
             {
                 string Album = RandomAlbum();
@@ -74,7 +77,64 @@ namespace ChitoseV2
                 string albumID = e.GetArg("albumID");
 
                 File.AppendAllText(Chitose.NSFWPath, "\r\n" + albumID); 
-            }); 
+            });
+            #endregion
+
+            #region Picture Edits
+            using (ImageFactory Imagefactory = new ImageFactory(preserveExifData: true))
+            {
+                commands.CreateCommand("blur").Parameter("blurlvl/picture", ParameterType.Multiple).Do(async (e) =>
+                {
+                    int blurlvl = Convert.ToInt32(e.Args[0]); 
+                    string ImageLink = e.Args[1]; 
+                    string ImagePath = Extensions.DownloadFile(ImageLink);
+
+                    Imagefactory.Load(ImagePath).GaussianBlur(blurlvl).Save(ImagePath); 
+
+                    await e.Channel.SendFile(ImagePath);
+
+                    File.Delete(ImagePath); 
+                });
+
+                commands.CreateCommand("tint").Parameter("color/picture", ParameterType.Multiple).Do(async (e) =>
+                {
+                    string color = e.Args[0];
+                    string picture = e.Args[1]; 
+                    bool completed = true; 
+
+                    string ImagePath = Extensions.DownloadFile(picture);
+
+                    switch (color)
+                    {
+                        case "red":
+                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.Red);
+                            break;
+                        case "blue":
+                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.Blue);
+                            break;
+                        case "pink":
+                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.Pink);
+                            break;
+                        case "hotpink":
+                            Imagefactory.Load(ImagePath).Tint(System.Drawing.Color.HotPink);
+                            break; 
+                        default:
+                            await e.Channel.SendMessage(string.Format("The color {0} is not available!", color));
+                            completed = false;
+                            File.Delete(ImagePath); 
+                            break;
+                    }
+
+                    if(completed == true)
+                    {
+                        Imagefactory.Save(ImagePath);
+                        await e.Channel.SendFile(ImagePath);
+                        File.Delete(ImagePath);
+                    } 
+                });
+
+            }
+            #endregion
         }
     }
 }

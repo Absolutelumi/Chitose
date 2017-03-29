@@ -129,29 +129,53 @@ namespace ChitoseV2
                     }
                 });
 
-                cgb.CreateCommand("join").Parameter("channel").Do(async (e) =>
+                cgb.CreateCommand("join").Parameter("channel", ParameterType.Optional).Do(async (e) =>
                 {
-                    var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
-                    if (voiceChannel == null)
+                    if(e.GetArg("channel").Length >= 1)
                     {
-                        await e.Channel.SendMessage(e.GetArg("channel") + " does not exist!");
-                        return;
-                    }
-                    if (voiceChannel.Users.Count() != 0)
-                    {
-                        bool success = await music.ConnectTo(voiceChannel);
-                        if (success)
+                        var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
+                        if (voiceChannel == null)
                         {
-                            await e.Channel.SendMessage("Joined " + voiceChannel.Name);
+                            await e.Channel.SendMessage(e.GetArg("channel") + " does not exist!");
+                            return;
+                        }
+                        if (voiceChannel.Users.Count() != 0)
+                        {
+                            bool success = await music.ConnectTo(voiceChannel);
+                            if (success)
+                            {
+                                await e.Channel.SendMessage("Joined " + voiceChannel.Name);
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("Already in " + voiceChannel.Name);
+                            }
                         }
                         else
                         {
-                            await e.Channel.SendMessage("Already in " + voiceChannel.Name);
+                            await e.Channel.SendMessage("I am not going to an empty room!");
                         }
                     }
                     else
                     {
-                        await e.Channel.SendMessage("I am not going to an empty room!");
+                        var voiceChannel = e.User.VoiceChannel;
+
+                        if (voiceChannel.Users.Count() != 0)
+                        {
+                            bool success = await music.ConnectTo(voiceChannel);
+                            if (success)
+                            {
+                                await e.Channel.SendMessage("Joined " + voiceChannel.Name);
+                            }
+                            else
+                            {
+                                await e.Channel.SendMessage("Already in " + voiceChannel.Name);
+                            }
+                        }
+                        else
+                        {
+                            await e.Channel.SendMessage("I am not going to an empty room!");
+                        }
                     }
                 });
 

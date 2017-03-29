@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ChitoseV2.Commands;
+using Discord;
 using Discord.Audio;
 using Discord.Commands;
 using System;
@@ -40,7 +41,7 @@ namespace ChitoseV2
             client.UsingAudio(x => x.Mode = AudioMode.Outgoing);
             MusicModule music = new MusicModule(client.GetService<AudioService>());
             music.OnSongChanged += async (title) => await client.FindServers("Too Too Roo").FirstOrDefault().TextChannels.Where(channel => channel.Name == "music").FirstOrDefault().SendMessage("Now playing " + (title ?? "nothing"));
-            List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music), new MAL() , new Pictures(), new Osu_()};
+            List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music), new MAL() , new Pictures(), new Osu_(), new Help()};
             commandSets.ForEach(set => set.AddCommands(client, client.GetService<CommandService>()));
 
             string[] playing = { "with lolis～", "with hvick225", "csgo with snax", "life", "osu!", "killing myself", "circle smash", "kancolle" };

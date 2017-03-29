@@ -36,7 +36,7 @@ namespace ChitoseV2
 
             using (WebClient downloadclient = new WebClient())
             {
-                downloadclient.DownloadFile(new Uri(url), Chitose.TempDirectory);
+                downloadclient.DownloadFile(new Uri(url), FilePath);
             }
 
             return FilePath; 
