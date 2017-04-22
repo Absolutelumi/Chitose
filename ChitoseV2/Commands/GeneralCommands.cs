@@ -78,8 +78,15 @@ namespace ChitoseV2
             commands.CreateCommand("rate").Parameter("waifu", ParameterType.Multiple).Do(async (e) =>
             {
                 string waifu = string.Join(" ", e.Args);
-                int waifurating;
-                waifurating = Extensions.rng.Next(100);
+                uint waifurating;
+
+                waifurating = ((uint)waifu.GetHashCode()) % 101;
+
+                if (waifu.ToLowerInvariant() == "shigetora" || waifu.ToLowerInvariant() == "cookiezi")
+                {
+                    waifurating = 727; 
+                }
+
                 await e.Channel.SendMessage(string.Format("{0} is a {1}!", waifu, waifurating));
             });
 
