@@ -56,18 +56,13 @@ namespace ChitoseV2
                     await e.Channel.SendMessage(string.Format("__***{0}***__ by ***{1}*** \n **Created by *{9}***  |  **Status : *{8}*** \n ***Download Link*** : **{10}** \n **Beatmap Info**\n```Ar {2} | Od {3} | Cs {4} | Hp {5} | Stars {6} | BPM {7} | Length {11}``` \n ",
                             BM.Title, BM.Artist, BM.DiffApproach, BM.DiffOverall, BM.DiffSize, BM.DiffDrain, Math.Round(Convert.ToDouble(BM.DifficultyRating), 2), Convert.ToInt32(BM.Bpm), BM.Approved.ToString(), BM.Creator, link, ToMinutes(BM.TotalLength)));
                 }
+                
             };
         }
 
         private string ToMinutes(int? Seconds)
         {
-            int seconds = Convert.ToInt32(Seconds);
-
-            int minutes = seconds / 60;
-            int something = minutes * 60;
-            int newseconds = seconds - something;
-
-            return string.Format("{0}:{1}", minutes, newseconds);
+            return TimeSpan.FromSeconds(Seconds.Value).ToString(@"mm\:ss");
         }
     }
 }
