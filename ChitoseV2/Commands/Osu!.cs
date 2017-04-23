@@ -59,15 +59,6 @@ namespace ChitoseV2
             };
         }
 
-        private string ToMinutes(int? Seconds)
-        {
-            int seconds = Convert.ToInt32(Seconds);
-
-            int minutes = seconds / 60;
-            int something = minutes * 60;
-            int newseconds = seconds - something;
-
-            return string.Format("{0}:{1}", minutes, newseconds);
-        }
+        private string ToMinutes(int? Seconds) => TimeSpan.FromSeconds(Seconds.Value).ToString(@"m\:ss");
     }
 }
