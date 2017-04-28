@@ -3,7 +3,7 @@ using Discord.Commands;
 
 namespace ChitoseV2.Commands
 {
-    internal class Help : CommandSet
+    internal class Help : ICommandSet
     {
         public void AddCommands(DiscordClient client, CommandService commands)
         {

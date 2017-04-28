@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace ChitoseV2
 {
-    internal class Osu_ : CommandSet
+    internal class Osu_ : ICommandSet
     {
         private static readonly Regex BeatmapUrlMatcher = new Regex(@"(?<full_link>(?<beatmap_link>(https:\/\/)?osu.ppy.sh\/(?<b_s>[bs])\/(?<beatmap_id>\d+))\S*)");
         private Api api = new Api(Chitose.APIKey);

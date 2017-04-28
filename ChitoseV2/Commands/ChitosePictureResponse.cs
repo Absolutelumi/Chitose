@@ -6,7 +6,7 @@ using System.Net;
 
 namespace ChitoseV2
 {
-    internal class ChitosePictureResponse : CommandSet
+    internal class ChitosePictureResponse : ICommandSet
     {
         public void AddCommands(DiscordClient client, CommandService commands)
         {

@@ -12,7 +12,7 @@ using System.Net;
 
 namespace ChitoseV2
 {
-    internal class Pictures : CommandSet
+    internal class Pictures : ICommandSet
     {
         private AccountEndpoint endpoint;
         private ImgurClient imgurClient;
@@ -34,7 +34,7 @@ namespace ChitoseV2
 
         private static void AddPictureEditingCommands(CommandService commands)
         {
-            using (ImageFactory Imagefactory = new ImageFactory(preserveExifData: true))
+            using (ImageFactory imagefactory = new ImageFactory(preserveExifData: true))
             {
                 commands.CreateCommand("blur").Parameter("blurlvl/picture", ParameterType.Multiple).Do(async (e) =>
                 {
@@ -42,7 +42,7 @@ namespace ChitoseV2
                     string ImageLink = e.Args[1];
                     string ImagePath = Extensions.DownloadFile(ImageLink);
 
-                    Imagefactory.Load(ImagePath).GaussianBlur(blurlvl).Save(ImagePath);
+                    imagefactory.Load(ImagePath).GaussianBlur(blurlvl).Save(ImagePath);
 
                     await e.Channel.SendFile(ImagePath);
 
@@ -56,7 +56,7 @@ namespace ChitoseV2
 
                     string ImagePath = Extensions.DownloadFile(picture);
 
-                    Imagefactory.Tint(System.Drawing.Color.FromName(color)).Save(ImagePath);
+                    imagefactory.Tint(System.Drawing.Color.FromName(color)).Save(ImagePath);
                     await e.Channel.SendFile(ImagePath);
                     File.Delete(ImagePath);
                 });
@@ -69,7 +69,7 @@ namespace ChitoseV2
 
                     string Imagepath = Extensions.DownloadFile(Imagelink);
 
-                    Imagefactory.Load(Imagepath).ReplaceColor(System.Drawing.Color.FromName(targetCol), System.Drawing.Color.FromName(replaceCol)).Save(Imagepath);
+                    imagefactory.Load(Imagepath).ReplaceColor(System.Drawing.Color.FromName(targetCol), System.Drawing.Color.FromName(replaceCol)).Save(Imagepath);
 
                     await e.Channel.SendFile(Imagepath);
                 });

@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace ChitoseV2
 {
-    internal class MAL : CommandSet
+    internal class MAL : ICommandSet
     {
         private myAnimeList myAnimeList = new myAnimeList();
 

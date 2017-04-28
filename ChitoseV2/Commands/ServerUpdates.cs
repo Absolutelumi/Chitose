@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace ChitoseV2
 {
-    internal class ServerUpdates : CommandSet
+    internal class ServerUpdates : ICommandSet
     {
         private MusicModule music;
 

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ChitoseV2
 {
-    internal class MusicCommands : CommandSet
+    internal class MusicCommands : ICommandSet
     {
         private MusicModule music;
 

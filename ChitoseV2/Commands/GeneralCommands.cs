@@ -7,7 +7,7 @@ using System.Net;
 
 namespace ChitoseV2
 {
-    internal class GeneralCommands : CommandSet
+    internal class GeneralCommands : ICommandSet
     {
         public void AddCommands(DiscordClient client, CommandService commands)
         {

@@ -17,14 +17,14 @@ namespace ChitoseV2
 
         public static string DownloadFile(string url)
         {
-            string FilePath = Chitose.TempDirectory + "Temp" + ".png";
+            string filePath = Chitose.TempDirectory + "Temp" + ".png";
 
             using (WebClient downloadclient = new WebClient())
             {
-                downloadclient.DownloadFile(new Uri(url), FilePath);
+                downloadclient.DownloadFile(new Uri(url), filePath);
             }
 
-            return FilePath;
+            return filePath;
         }
 
         public static T Random<T>(this T[] array)

@@ -9,7 +9,7 @@ using System.Web.Script.Serialization;
 
 namespace ChitoseV2
 {
-    internal class Japanese : CommandSet
+    internal class Japanese : ICommandSet
     {
         private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
 
