@@ -39,7 +39,8 @@ namespace ChitoseV2
 
             client.MessageReceived += async (s, e) =>
             {
-                if (BeatmapUrlMatcher.IsMatch(e.Message.Text) && e.Message.User.IsBot == false)
+                //Beatmap Info
+                if (BeatmapUrlMatcher.IsMatch(e.Message.Text) && e.Message.User.IsBot == false && e.Message.Text.Split(' ').Length == 1)
                 {
                     var match = BeatmapUrlMatcher.Match(e.Message.Text);
                     string link = match.Groups["beatmap_link"].Value;
