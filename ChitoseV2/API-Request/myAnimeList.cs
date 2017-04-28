@@ -1,21 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+﻿using System.IO;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml;
 
 namespace ChitoseV2
 {
-    class myAnimeList
+    internal class myAnimeList
     {
-        public struct AnimeResult
-        {
-            public string title, synopsis, image;
-            public bool valid;
-        }
         public static AnimeResult FindMyAnime(string search, string username, string password)
         {
             HttpWebRequest request = WebRequest.CreateHttp($"https://myanimelist.net/api/anime/search.xml?q={search}");
@@ -42,6 +32,12 @@ namespace ChitoseV2
             }
             catch { }
             return new AnimeResult() { valid = false };
+        }
+
+        public struct AnimeResult
+        {
+            public string title, synopsis, image;
+            public bool valid;
         }
     }
 }

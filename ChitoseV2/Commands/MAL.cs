@@ -11,9 +11,9 @@ namespace ChitoseV2
     {
         private myAnimeList myAnimeList = new myAnimeList();
 
-        private string title { get; set; }
-        private string image { get; set; }
         private string description { get; set; }
+        private string image { get; set; }
+        private string title { get; set; }
 
         public void AddCommands(DiscordClient client, CommandService commands)
         {

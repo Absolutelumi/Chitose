@@ -131,7 +131,7 @@ namespace ChitoseV2
 
                 cgb.CreateCommand("join").Parameter("channel", ParameterType.Optional).Do(async (e) =>
                 {
-                    if(e.GetArg("channel").Length >= 1)
+                    if (e.GetArg("channel").Length >= 1)
                     {
                         var voiceChannel = client.FindServers("Too Too Roo").FirstOrDefault().VoiceChannels.FirstOrDefault(x => x.Name.ToLowerInvariant() == e.GetArg("channel").ToLowerInvariant());
                         if (voiceChannel == null)

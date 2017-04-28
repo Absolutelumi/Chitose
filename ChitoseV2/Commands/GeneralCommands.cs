@@ -56,7 +56,7 @@ namespace ChitoseV2
                 {
                     string user = e.GetArg("user");
 
-                    if(user[1] == '@')
+                    if (user[1] == '@')
                     {
                         Message[] userMessages = e.Channel.Messages.Take(50).Where(messages => e.Message.User.Id == ulong.Parse(user.Substring(2, user.Length - 3))).ToArray();
 
@@ -84,7 +84,7 @@ namespace ChitoseV2
 
                 if (waifu.ToLowerInvariant() == "shigetora" || waifu.ToLowerInvariant() == "cookiezi")
                 {
-                    waifurating = 727; 
+                    waifurating = 727;
                 }
 
                 await e.Channel.SendMessage(string.Format("{0} is a {1}!", waifu, waifurating));
@@ -92,7 +92,7 @@ namespace ChitoseV2
 
             commands.CreateCommand("jesus").Parameter("question", ParameterType.Multiple).Do(async (e) =>
             {
-                await e.Channel.SendMessage("Jesus: Lolis are the answer"); 
+                await e.Channel.SendMessage("Jesus: Lolis are the answer");
             });
         }
     }

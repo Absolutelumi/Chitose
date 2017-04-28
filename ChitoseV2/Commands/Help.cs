@@ -1,10 +1,5 @@
 ﻿using Discord;
 using Discord.Commands;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChitoseV2.Commands
 {
@@ -43,9 +38,9 @@ namespace ChitoseV2.Commands
                 "**show <tags>**: Shows non-NSFW anime picture with same <tags> \n" +
                 "**i**: Shows random NSFW hentai picture \n" +
                 "**Blur <blur level> <picture link>**: Blurs the picture with gaussian blur \n" +
-                "**tint <color> <picture link>**: Tints the picture with selected color";  
+                "**tint <color> <picture link>**: Tints the picture with selected color";
 
-                await e.User.SendMessage(HelpMessage); 
+                await e.User.SendMessage(HelpMessage);
             });
         }
     }

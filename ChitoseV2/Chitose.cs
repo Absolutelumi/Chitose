@@ -12,18 +12,17 @@ namespace ChitoseV2
 {
     internal class Chitose
     {
-        Random random = new Random();
-
+        public static readonly string APIKey = Properties.Settings.Default.APIKey;
         public static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
         public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
-        public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
-        public static readonly string MALUsername = Properties.Settings.Default.MALUsername;
-        public static readonly string MALPassword = Properties.Settings.Default.MALPassword;
-        public static readonly string NSFWPath = Properties.Settings.Default.NSFWPath;
-        public static readonly string APIKey = Properties.Settings.Default.APIKey;
         public static readonly string ImgurKey = Properties.Settings.Default.ImgurKey;
-        public static readonly string ImgurSecret = Properties.Settings.Default.ImgurSecret; 
+        public static readonly string ImgurSecret = Properties.Settings.Default.ImgurSecret;
+        public static readonly string MALPassword = Properties.Settings.Default.MALPassword;
+        public static readonly string MALUsername = Properties.Settings.Default.MALUsername;
+        public static readonly string NSFWPath = Properties.Settings.Default.NSFWPath;
+        public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
         private char prefix = '!';
+        private Random random = new Random();
 
         public Chitose()
         {
@@ -43,7 +42,7 @@ namespace ChitoseV2
             client.UsingAudio(x => x.Mode = AudioMode.Outgoing);
             MusicModule music = new MusicModule(client.GetService<AudioService>());
             music.OnSongChanged += async (title) => await client.FindServers("Too Too Roo").FirstOrDefault().TextChannels.Where(channel => channel.Name == "music").FirstOrDefault().SendMessage("Now playing " + (title ?? "nothing"));
-            List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music), new MAL() , new Pictures(), new Osu_(), new Help()};
+            List<CommandSet> commandSets = new List<CommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music), new MAL(), new Pictures(), new Osu_(), new Help() };
             commandSets.ForEach(set => set.AddCommands(client, client.GetService<CommandService>()));
 
             string[] playing = { "with lolis～", "with hvick225", "csgo with snax", "life", "osu!", "killing myself", "circle smash", "kancolle" };

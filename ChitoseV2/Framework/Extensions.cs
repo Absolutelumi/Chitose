@@ -15,6 +15,18 @@ namespace ChitoseV2
             return Path.GetInvalidFileNameChars().Aggregate(filename, (current, c) => current.Replace(c.ToString(), string.Empty));
         }
 
+        public static string DownloadFile(string url)
+        {
+            string FilePath = Chitose.TempDirectory + "Temp" + ".png";
+
+            using (WebClient downloadclient = new WebClient())
+            {
+                downloadclient.DownloadFile(new Uri(url), FilePath);
+            }
+
+            return FilePath;
+        }
+
         public static T Random<T>(this T[] array)
         {
             return array[rng.Next(array.Length)];
@@ -28,18 +40,6 @@ namespace ChitoseV2
         public static string ToTitleCase(this string text)
         {
             return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text);
-        }
-
-        public static string DownloadFile(string url)
-        {
-            string FilePath = Chitose.TempDirectory + "Temp" + ".png"; 
-
-            using (WebClient downloadclient = new WebClient())
-            {
-                downloadclient.DownloadFile(new Uri(url), FilePath);
-            }
-
-            return FilePath; 
         }
     }
 }
