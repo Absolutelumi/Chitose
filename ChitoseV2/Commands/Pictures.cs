@@ -17,6 +17,8 @@ namespace ChitoseV2
         private AccountEndpoint endpoint;
         private ImgurClient imgurClient;
         private Reddit redditClient;
+        private Channel NSFWChannel;
+        private bool NSFWAllow = true; 
 
         public Pictures()
         {
@@ -109,24 +111,80 @@ namespace ChitoseV2
 
         private void AddNsfwCommands(CommandService commands)
         {
-            commands.CreateCommand("i").Do(async (e) =>
+            if(NSFWAllow == true)
             {
-                string Album = RandomAlbum();
+                commands.CreateCommand("i").Do(async (e) =>
+                {
+                    string Album = RandomAlbum();
 
-                var resultAlbum = await endpoint.GetAlbumAsync(Album, "Absolutelumi");
+                    var resultAlbum = await endpoint.GetAlbumAsync(Album, "Absolutelumi");
 
-                var image = Extensions.Random(resultAlbum.Images.ToArray());
+                    var image = Extensions.Random(resultAlbum.Images.ToArray());
 
-                var NSFWChannel = e.Server.FindChannels("nsfw").FirstOrDefault();
+                    var NSFWChannel = e.Server.FindChannels("nsfw").FirstOrDefault();
 
-                await NSFWChannel.SendMessage(image.Link);
-            });
+                    if (NSFWChannel != null)
+                    {
+                        await NSFWChannel.SendMessage(image.Link);
+                    }
+                    else
+                    {
+                        await e.Channel.SendMessage(image.Link);
+                    }
+                });
 
-            commands.CreateCommand("addalbum").Parameter("albumID").Do((e) =>
+                commands.CreateCommand("addalbum").Parameter("albumID").Do((e) =>
+                {
+                    string albumID = e.GetArg("albumID");
+
+                    File.AppendAllText(Chitose.NSFWPath, "\r\n" + albumID);
+                });
+
+                commands.CreateCommand("NSFW").Parameter("Channel").Do((e) =>
+                {
+                    string Channel = string.Join(" ", e.Args);
+                    NSFWChannel = e.Server.FindChannels(Channel).FirstOrDefault();
+                    if (NSFWChannel != null)
+                    {
+                        e.Channel.SendMessage(string.Format("{0} is now the channel all NSFW commands will send to!", NSFWChannel.Name));
+                    }
+                    else
+                    {
+                        e.Channel.SendMessage("Channel not found!");
+                    }
+                });
+            }
+
+            commands.CreateCommand("NSFWAllow").Parameter("Enable/Disable").Do((e) =>
             {
-                string albumID = e.GetArg("albumID");
-
-                File.AppendAllText(Chitose.NSFWPath, "\r\n" + albumID);
+                if(e.Args[0].ToLowerInvariant() == "enable")
+                {
+                    if(NSFWAllow == true && NSFWChannel != null)
+                    {
+                        e.Channel.SendMessage(string.Format("NSFW is already enabled! The NSFW channel is {0}.", NSFWChannel.Name)); 
+                    }
+                    else if(NSFWAllow == true && NSFWChannel == null)
+                    {
+                        e.Channel.SendMessage("NSFW is already enabled, but there is no NSFW channel and will defaultly send to the channel the command was sent in. To change this, use !NSFW <Channel Name>"); 
+                    }
+                    else
+                    {
+                        NSFWAllow = true;
+                        e.Channel.SendMessage("NSFW is now enabled! To set an NSFW channel, use the command !NSFW <Channel Name>"); 
+                    }
+                }
+                else if(e.Args[1].ToLowerInvariant() == "disable")
+                {
+                    if(NSFWAllow == true)
+                    {
+                        NSFWAllow = false;
+                        e.Channel.SendMessage("NSFW is now disabled!"); 
+                    }
+                    else
+                    {
+                        e.Channel.SendMessage("NSFW is already disabled!");
+                    }
+                }
             });
         }
 
