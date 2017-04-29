@@ -18,7 +18,6 @@ namespace ChitoseV2
         private ImgurClient imgurClient;
         private Reddit redditClient;
         private Channel NSFWChannel;
-        private bool NSFWAllow = true; 
 
         public Pictures()
         {
@@ -111,9 +110,9 @@ namespace ChitoseV2
 
         private void AddNsfwCommands(CommandService commands)
         {
-            if(NSFWAllow == true)
+            commands.CreateCommand("i").Do(async (e) =>
             {
-                commands.CreateCommand("i").Do(async (e) =>
+                if(IsNSFW(e.Server) == true)
                 {
                     string Album = RandomAlbum();
 
@@ -121,7 +120,7 @@ namespace ChitoseV2
 
                     var image = Extensions.Random(resultAlbum.Images.ToArray());
 
-                    var NSFWChannel = e.Server.FindChannels("nsfw").FirstOrDefault();
+                    var NSFWChannel = FindNSFWChannel(e.Server); 
 
                     if (NSFWChannel != null)
                     {
@@ -131,59 +130,42 @@ namespace ChitoseV2
                     {
                         await e.Channel.SendMessage(image.Link);
                     }
-                });
+                }
+            });
 
-                commands.CreateCommand("addalbum").Parameter("albumID").Do((e) =>
+            commands.CreateCommand("addalbum").Parameter("albumID").Do((e) =>
+            {
+                string albumID = e.GetArg("albumID");
+
+                File.AppendAllText(Chitose.NSFWPath, "\r\n" + albumID);
+            });
+
+            commands.CreateCommand("NSFW").Parameter("Channel").Do((e) =>
+            {
+                string Channel = string.Join(" ", e.Args);
+                NSFWChannel = e.Server.FindChannels(Channel).FirstOrDefault();
+                if (NSFWChannel != null)
                 {
-                    string albumID = e.GetArg("albumID");
-
-                    File.AppendAllText(Chitose.NSFWPath, "\r\n" + albumID);
-                });
-
-                commands.CreateCommand("NSFW").Parameter("Channel").Do((e) =>
+                    ChangeNSFWChannel(e.Server, NSFWChannel); 
+                    e.Channel.SendMessage(string.Format("{0} is now the channel all NSFW commands will send to!", NSFWChannel.Name));
+                }
+                else
                 {
-                    string Channel = string.Join(" ", e.Args);
-                    NSFWChannel = e.Server.FindChannels(Channel).FirstOrDefault();
-                    if (NSFWChannel != null)
-                    {
-                        e.Channel.SendMessage(string.Format("{0} is now the channel all NSFW commands will send to!", NSFWChannel.Name));
-                    }
-                    else
-                    {
-                        e.Channel.SendMessage("Channel not found!");
-                    }
-                });
-            }
+                    e.Channel.SendMessage("Channel not found!");
+                }
+            });
 
             commands.CreateCommand("NSFWAllow").Parameter("Enable/Disable").Do((e) =>
             {
                 if(e.Args[0].ToLowerInvariant() == "enable")
                 {
-                    if(NSFWAllow == true && NSFWChannel != null)
-                    {
-                        e.Channel.SendMessage(string.Format("NSFW is already enabled! The NSFW channel is {0}.", NSFWChannel.Name)); 
-                    }
-                    else if(NSFWAllow == true && NSFWChannel == null)
-                    {
-                        e.Channel.SendMessage("NSFW is already enabled, but there is no NSFW channel and will defaultly send to the channel the command was sent in. To change this, use !NSFW <Channel Name>"); 
-                    }
-                    else
-                    {
-                        NSFWAllow = true;
-                        e.Channel.SendMessage("NSFW is now enabled! To set an NSFW channel, use the command !NSFW <Channel Name>"); 
-                    }
+                    ChangeNSFWAllow(e.Server, true);
+                    e.Channel.SendMessage("NSFW is now enabled! Change NSFW channel by using !NSFW <Channel Name>. \n If you do not do this, the NSFW commands will default to the channel the command was sent in."); 
                 }
-                else if(e.Args[1].ToLowerInvariant() == "disable")
+                else if(e.Args[0].ToLowerInvariant() == "disable")
                 {
-                    if(NSFWAllow == true)
-                    {
-                        NSFWAllow = false;
-                        e.Channel.SendMessage("NSFW is now disabled!"); 
-                    }
-                    else
-                    {
-                        e.Channel.SendMessage("NSFW is already disabled!");
-                    }
+                    ChangeNSFWAllow (e.Server, false);
+                    e.Channel.SendMessage("NSFW is now disabled!"); 
                 }
             });
         }
@@ -192,6 +174,82 @@ namespace ChitoseV2
         {
             string[] imgurAlbums = File.ReadAllLines(Chitose.NSFWPath);
             return imgurAlbums.Random();
+        }
+
+        private bool IsNSFW(Server server)
+        {
+            StreamReader filereader = new StreamReader(Chitose.ConfigDirectory + "NSFW.txt");
+            string line = filereader.ReadLine();
+            while(line != null)
+            {
+                if(ulong.Parse(line.Split('|')[0]) == server.Id)
+                {
+                    if(line.Split('|')[1] == "allow")
+                    {
+                        return true;
+                    }
+                    else
+                    {
+                        return false; 
+                    }
+                }
+            }
+            return false; 
+        }
+
+        public void NewServer(Server server)
+        {
+            StreamWriter streamwriter = new StreamWriter(Chitose.ConfigDirectory + "NSFW.txt");
+            streamwriter.WriteLine(string.Format("{0}|disabled|null", server.Id.ToString()));
+        }
+
+        public void ChangeNSFWAllow(Server server, bool NSFW)
+        {
+            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
+            for(int i = 0; i < lines.Length; i++)
+            {
+                if(ulong.Parse(lines[i].Split('|')[0]) == server.Id)
+                {
+                    lines[i] = string.Format("{0}|{1}|{3}", server.Id.ToString(), NSFW ? "enabled" : "disabled", FindNSFWChannel(server).Name);
+                    break;
+                }
+            }
+            File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines); 
+        }
+
+        public void ChangeNSFWChannel(Server server, Channel channel)
+        {
+            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (ulong.Parse(lines[i].Split('|')[0]) == server.Id)
+                {
+                    lines[i] = string.Format("{0}|{1}|{3}", server.Id.ToString(), lines[i].Split('|')[1], channel.Name);
+                    break;
+                }
+            }
+            File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines);
+        }
+
+        public Channel FindNSFWChannel(Server server)
+        {
+            StreamReader filereader = new StreamReader(Chitose.ConfigDirectory + "NSFW.txt");
+            string line = filereader.ReadLine();
+            while (line != null)
+            {
+                if(line.Split('|')[0] == server.Id.ToString())
+                {
+                    if(line.Split('|')[2] == "null")
+                    {
+                        return null; 
+                    }
+                    else
+                    {
+                        return server.FindChannels(line.Split('|')[2]).FirstOrDefault();
+                    }
+                }
+            }
+            return null; 
         }
     }
 }
