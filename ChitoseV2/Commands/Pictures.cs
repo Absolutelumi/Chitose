@@ -17,7 +17,6 @@ namespace ChitoseV2
         private AccountEndpoint endpoint;
         private ImgurClient imgurClient;
         private Reddit redditClient;
-        private Channel NSFWChannel;
 
         public Pictures()
         {
@@ -143,7 +142,7 @@ namespace ChitoseV2
             commands.CreateCommand("NSFW").Parameter("Channel").Do((e) =>
             {
                 string Channel = string.Join(" ", e.Args);
-                NSFWChannel = e.Server.FindChannels(Channel).FirstOrDefault();
+                Channel NSFWChannel = e.Server.FindChannels(Channel).FirstOrDefault();
                 if (NSFWChannel != null)
                 {
                     ChangeNSFWChannel(e.Server, NSFWChannel); 
