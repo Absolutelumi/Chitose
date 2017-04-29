@@ -196,13 +196,13 @@ namespace ChitoseV2
             return false; 
         }
 
-        public void NewServer(Server server)
+        private void NewServer(Server server)
         {
             StreamWriter streamwriter = new StreamWriter(Chitose.ConfigDirectory + "NSFW.txt");
             streamwriter.WriteLine(string.Format("{0}|disabled|null", server.Id.ToString()));
         }
 
-        public void ChangeNSFWAllow(Server server, bool NSFW)
+        private void ChangeNSFWAllow(Server server, bool NSFW)
         {
             string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
             for(int i = 0; i < lines.Length; i++)
@@ -216,7 +216,7 @@ namespace ChitoseV2
             File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines); 
         }
 
-        public void ChangeNSFWChannel(Server server, Channel channel)
+        private void ChangeNSFWChannel(Server server, Channel channel)
         {
             string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
             for (int i = 0; i < lines.Length; i++)
@@ -230,7 +230,7 @@ namespace ChitoseV2
             File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines);
         }
 
-        public Channel FindNSFWChannel(Server server)
+        private Channel FindNSFWChannel(Server server)
         {
             StreamReader filereader = new StreamReader(Chitose.ConfigDirectory + "NSFW.txt");
             string line = filereader.ReadLine();
