@@ -139,6 +139,12 @@ namespace ChitoseV2
                 File.AppendAllText(Chitose.NSFWPath, "\r\n" + albumID);
             });
 
+            commands.CreateCommand("AddServer").Do((e) =>
+            {
+                NewServer(e.Server);
+                e.Channel.SendMessage("Server added!"); 
+            });
+
             commands.CreateCommand("NSFW").Parameter("Channel").Do((e) =>
             {
                 string Channel = string.Join(" ", e.Args);
@@ -146,7 +152,7 @@ namespace ChitoseV2
                 if (NSFWChannel != null)
                 {
                     ChangeNSFWChannel(e.Server, NSFWChannel); 
-                    e.Channel.SendMessage(string.Format("{0} is now the channel all NSFW commands will send to!", NSFWChannel.Name));
+                    e.Channel.SendMessage(string.Format("{0} is now the channel all NSFW commands will send to!", NSFWChannel.Mention));
                 }
                 else
                 {
@@ -166,6 +172,10 @@ namespace ChitoseV2
                     ChangeNSFWAllow (e.Server, false);
                     e.Channel.SendMessage("NSFW is now disabled!"); 
                 }
+                else
+                {
+                    e.Channel.SendMessage("Please use 'enable' or 'disable'"); 
+                }
             });
         }
 
@@ -175,31 +185,30 @@ namespace ChitoseV2
             return imgurAlbums.Random();
         }
 
+        #region NSFW Settings
         private bool IsNSFW(Server server)
         {
-            StreamReader filereader = new StreamReader(Chitose.ConfigDirectory + "NSFW.txt");
-            string line = filereader.ReadLine();
-            while(line != null)
+            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
+            for (int i = 0; i < lines.Length; i++)
             {
-                if(ulong.Parse(line.Split('|')[0]) == server.Id)
+                if (lines[i].Split(';')[0] == server.Name)
                 {
-                    if(line.Split('|')[1] == "allow")
+                    if (lines[i].Split(';')[1] == "enabled")
                     {
                         return true;
                     }
                     else
                     {
-                        return false; 
+                        return false;
                     }
                 }
             }
-            return false; 
+            return false;
         }
 
         private void NewServer(Server server)
         {
-            StreamWriter streamwriter = new StreamWriter(Chitose.ConfigDirectory + "NSFW.txt");
-            streamwriter.WriteLine(string.Format("{0}|disabled|null", server.Id.ToString()));
+            File.AppendAllText(Chitose.ConfigDirectory + "NSFW.txt", "\r\n" + string.Format("{0};disabled;null", server.Name));
         }
 
         private void ChangeNSFWAllow(Server server, bool NSFW)
@@ -207,13 +216,13 @@ namespace ChitoseV2
             string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
             for(int i = 0; i < lines.Length; i++)
             {
-                if(ulong.Parse(lines[i].Split('|')[0]) == server.Id)
+                if(lines[i].Split(';')[0] == server.Name)
                 {
-                    lines[i] = string.Format("{0}|{1}|{3}", server.Id.ToString(), NSFW ? "enabled" : "disabled", FindNSFWChannel(server).Name);
+                    lines[i] = string.Format("{0};{1};{2}", server.Name, NSFW ? "enabled" : "disabled", lines[i].Split(';')[2]);
+                    File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines);
                     break;
                 }
             }
-            File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines); 
         }
 
         private void ChangeNSFWChannel(Server server, Channel channel)
@@ -221,9 +230,9 @@ namespace ChitoseV2
             string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
             for (int i = 0; i < lines.Length; i++)
             {
-                if (ulong.Parse(lines[i].Split('|')[0]) == server.Id)
+                if (lines[i].Split(';')[0] == server.Name)
                 {
-                    lines[i] = string.Format("{0}|{1}|{3}", server.Id.ToString(), lines[i].Split('|')[1], channel.Name);
+                    lines[i] = string.Format("{0};{1};{2}", server.Name, lines[i].Split(';')[1], channel.Name);
                     break;
                 }
             }
@@ -232,23 +241,23 @@ namespace ChitoseV2
 
         private Channel FindNSFWChannel(Server server)
         {
-            StreamReader filereader = new StreamReader(Chitose.ConfigDirectory + "NSFW.txt");
-            string line = filereader.ReadLine();
-            while (line != null)
+            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
+            for (int i = 0; i < lines.Length; i++)
             {
-                if(line.Split('|')[0] == server.Id.ToString())
+                if (lines[i].Split(';')[0] == server.Name)
                 {
-                    if(line.Split('|')[2] == "null")
+                    if (lines[i].Split(';')[2] == "null")
                     {
-                        return null; 
+                        return null;
                     }
                     else
                     {
-                        return server.FindChannels(line.Split('|')[2]).FirstOrDefault();
+                        return server.FindChannels(lines[i].Split(';')[2]).FirstOrDefault();
                     }
                 }
             }
             return null; 
         }
+        #endregion
     }
 }
