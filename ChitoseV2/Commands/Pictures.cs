@@ -17,8 +17,8 @@ namespace ChitoseV2
     {
         private AccountEndpoint endpoint;
         private ImgurClient imgurClient;
-        private Reddit redditClient;
         private NsfwManager nsfwManager;
+        private Reddit redditClient;
 
         public Pictures()
         {
@@ -114,7 +114,7 @@ namespace ChitoseV2
         {
             commands.CreateCommand("i").Do(async (e) =>
             {
-                if(IsNSFW(e.Server) == true)
+                if (IsNSFW(e.Server) == true)
                 {
                     string Album = RandomAlbum();
 
@@ -122,7 +122,7 @@ namespace ChitoseV2
 
                     var image = resultAlbum.Images.ToArray().Random();
 
-                    var NSFWChannel = FindNSFWChannel(e.Server); 
+                    var NSFWChannel = FindNSFWChannel(e.Server);
 
                     if (NSFWChannel != null)
                     {
@@ -148,7 +148,7 @@ namespace ChitoseV2
                 Channel NSFWChannel = e.Server.FindChannels(Channel).FirstOrDefault();
                 if (NSFWChannel != null)
                 {
-                    ChangeNSFWChannel(e.Server, NSFWChannel); 
+                    ChangeNSFWChannel(e.Server, NSFWChannel);
                     e.Channel.SendMessage(string.Format("{0} is now the channel all NSFW commands will send to!", NSFWChannel.Mention));
                 }
                 else
@@ -162,16 +162,16 @@ namespace ChitoseV2
                 if (e.Args[0].ToLowerInvariant() == "enable")
                 {
                     ChangeNSFWAllow(e.Server, true);
-                    e.Channel.SendMessage("NSFW is now enabled! Change NSFW channel by using !NSFW <Channel Name>. \n If you do not do this, the NSFW commands will default to the channel the command was sent in."); 
+                    e.Channel.SendMessage("NSFW is now enabled! Change NSFW channel by using !NSFW <Channel Name>. \n If you do not do this, the NSFW commands will default to the channel the command was sent in.");
                 }
                 else if (e.Args[0].ToLowerInvariant() == "disable")
                 {
-                    ChangeNSFWAllow (e.Server, false);
-                    e.Channel.SendMessage("NSFW is now disabled!"); 
+                    ChangeNSFWAllow(e.Server, false);
+                    e.Channel.SendMessage("NSFW is now disabled!");
                 }
                 else
                 {
-                    e.Channel.SendMessage("Please use 'enable' or 'disable'"); 
+                    e.Channel.SendMessage("Please use 'enable' or 'disable'");
                 }
             });
         }
@@ -183,10 +183,6 @@ namespace ChitoseV2
         }
 
         #region NSFW Settings
-        private bool IsNSFW(Server server)
-        {
-            return nsfwManager.GetNsfwInfo(server.Name).Enabled;
-        }
 
         private void ChangeNSFWAllow(Server server, bool NSFW)
         {
@@ -200,8 +196,14 @@ namespace ChitoseV2
 
         private Channel FindNSFWChannel(Server server)
         {
-            return server.FindChannels(nsfwManager.GetNsfwInfo(server.Name).Channel).FirstOrDefault(); 
+            return server.FindChannels(nsfwManager.GetNsfwInfo(server.Name).Channel).FirstOrDefault();
         }
-        #endregion
+
+        private bool IsNSFW(Server server)
+        {
+            return nsfwManager.GetNsfwInfo(server.Name).Enabled;
+        }
+
+        #endregion NSFW Settings
     }
 }
