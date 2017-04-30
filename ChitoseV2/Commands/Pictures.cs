@@ -159,12 +159,12 @@ namespace ChitoseV2
 
             commands.CreateCommand("NSFWAllow").Parameter("Enable/Disable").Do((e) =>
             {
-                if(e.Args[0].ToLowerInvariant() == "enable")
+                if (e.Args[0].ToLowerInvariant() == "enable")
                 {
                     ChangeNSFWAllow(e.Server, true);
                     e.Channel.SendMessage("NSFW is now enabled! Change NSFW channel by using !NSFW <Channel Name>. \n If you do not do this, the NSFW commands will default to the channel the command was sent in."); 
                 }
-                else if(e.Args[0].ToLowerInvariant() == "disable")
+                else if (e.Args[0].ToLowerInvariant() == "disable")
                 {
                     ChangeNSFWAllow (e.Server, false);
                     e.Channel.SendMessage("NSFW is now disabled!"); 

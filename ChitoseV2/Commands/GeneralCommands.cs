@@ -18,9 +18,12 @@ namespace ChitoseV2
                 await e.Channel.SendMessage(string.Format("```{0} your roles are: {1}```", e.User.Mention, role));
             });
 
-            commands.CreateCommand("myav").Do(async (e) =>
+            commands.CreateCommand("myav").Do(async (e) => { await e.Channel.SendMessage(string.Format("{0}'s avatar is:  {1}", e.User.Mention, e.User.AvatarUrl)); });
+
+            commands.CreateCommand("av").Parameter("user").Do(async (e) => 
             {
-                await e.Channel.SendMessage(string.Format("{0}'s avatar is:  {1}", e.User.Mention, e.User.AvatarUrl));
+                User user = e.Server.FindUsers(string.Join(" ", e.Args)).FirstOrDefault();
+                await e.Channel.SendMessage(string.Format("{0}'s avatar is {1}", user.Mention, user.AvatarUrl));
             });
 
             commands.CreateCommand("triggered").Parameter("mention").Do(async (e) =>
@@ -62,7 +65,7 @@ namespace ChitoseV2
 
                         await e.Channel.DeleteMessages(userMessages);
 
-                        await e.Channel.SendMessage(string.Format("Messages purged! :skull:", user));
+                        await e.Channel.SendMessage(string.Format("{0}'s messages purged! :skull:", user));
                     }
                     else
                     {
@@ -70,7 +73,7 @@ namespace ChitoseV2
 
                         await e.Channel.DeleteMessages(userMessages);
 
-                        await e.Channel.SendMessage(string.Format("Messages purged! :skull:", user));
+                        await e.Channel.SendMessage(string.Format("{0}'s messages purged! :skull:", user));
                     }
                 });
             });
