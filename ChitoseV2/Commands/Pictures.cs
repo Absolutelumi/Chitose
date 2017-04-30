@@ -1,4 +1,5 @@
-﻿using Discord;
+﻿using ChitoseV2.Framework;
+using Discord;
 using Discord.Commands;
 using ImageProcessor;
 using Imgur.API.Authentication.Impl;
@@ -17,12 +18,14 @@ namespace ChitoseV2
         private AccountEndpoint endpoint;
         private ImgurClient imgurClient;
         private Reddit redditClient;
+        private NsfwManager nsfwManager;
 
         public Pictures()
         {
             redditClient = new Reddit();
             imgurClient = new ImgurClient(Chitose.ImgurKey, Chitose.ImgurSecret);
             endpoint = new AccountEndpoint(imgurClient);
+            nsfwManager = new NsfwManager();
         }
 
         public void AddCommands(DiscordClient client, CommandService commands)
@@ -117,7 +120,7 @@ namespace ChitoseV2
 
                     var resultAlbum = await endpoint.GetAlbumAsync(Album, "Absolutelumi");
 
-                    var image = Extensions.Random(resultAlbum.Images.ToArray());
+                    var image = resultAlbum.Images.ToArray().Random();
 
                     var NSFWChannel = FindNSFWChannel(e.Server); 
 
@@ -137,12 +140,6 @@ namespace ChitoseV2
                 string albumID = e.GetArg("albumID");
 
                 File.AppendAllText(Chitose.NSFWPath, "\r\n" + albumID);
-            });
-
-            commands.CreateCommand("AddServer").Do((e) =>
-            {
-                NewServer(e.Server);
-                e.Channel.SendMessage("Server added!"); 
             });
 
             commands.CreateCommand("NSFW").Parameter("Channel").Do((e) =>
@@ -188,75 +185,22 @@ namespace ChitoseV2
         #region NSFW Settings
         private bool IsNSFW(Server server)
         {
-            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].Split(';')[0] == server.Name)
-                {
-                    if (lines[i].Split(';')[1] == "enabled")
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-            }
-            return false;
-        }
-
-        private void NewServer(Server server)
-        {
-            File.AppendAllText(Chitose.ConfigDirectory + "NSFW.txt", "\r\n" + string.Format("{0};disabled;null", server.Name));
+            return nsfwManager.GetNsfwInfo(server.Name).Enabled;
         }
 
         private void ChangeNSFWAllow(Server server, bool NSFW)
         {
-            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
-            for(int i = 0; i < lines.Length; i++)
-            {
-                if(lines[i].Split(';')[0] == server.Name)
-                {
-                    lines[i] = string.Format("{0};{1};{2}", server.Name, NSFW ? "enabled" : "disabled", lines[i].Split(';')[2]);
-                    File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines);
-                    break;
-                }
-            }
+            nsfwManager.UpdateServer(server.Name, enabled: NSFW);
         }
 
         private void ChangeNSFWChannel(Server server, Channel channel)
         {
-            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].Split(';')[0] == server.Name)
-                {
-                    lines[i] = string.Format("{0};{1};{2}", server.Name, lines[i].Split(';')[1], channel.Name);
-                    break;
-                }
-            }
-            File.WriteAllLines(Chitose.ConfigDirectory + "NSFW.txt", lines);
+            nsfwManager.UpdateServer(server.Name, channel: channel.Name);
         }
 
         private Channel FindNSFWChannel(Server server)
         {
-            string[] lines = File.ReadAllLines(Chitose.ConfigDirectory + "NSFW.txt");
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (lines[i].Split(';')[0] == server.Name)
-                {
-                    if (lines[i].Split(';')[2] == "null")
-                    {
-                        return null;
-                    }
-                    else
-                    {
-                        return server.FindChannels(lines[i].Split(';')[2]).FirstOrDefault();
-                    }
-                }
-            }
-            return null; 
+            return server.FindChannels(nsfwManager.GetNsfwInfo(server.Name).Channel).FirstOrDefault(); 
         }
         #endregion
     }
