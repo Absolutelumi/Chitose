@@ -21,6 +21,10 @@ namespace ChitoseV2
 
                 var user = e.User;
 
+                var role = e.Server.FindRoles("normies");
+
+                await user.AddRoles(role.ToArray());
+
                 await channel.SendMessage(string.Format("@everyone {0} has joined the server!", user.Name));
             };
 
