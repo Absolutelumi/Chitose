@@ -16,7 +16,6 @@ namespace ChitoseV2
 {
     internal class Osu_ : ICommandSet
     {
-        private static readonly Regex BeatmapDifficultyMatcher = new Regex(@"<a class='beatmapTab (active)?' href='\/b\/(?<difficulty_id>\d+).*<span>(?<difficulty_name>.*)<\/span>");
         private static readonly Regex BeatmapUrlMatcher = new Regex(@"(?<full_link>(?<beatmap_link>(https:\/\/)?osu.ppy.sh\/(?<b_s>[bs])\/(?<beatmap_id>\d+))\S*)");
         private static readonly ImageAnnotatorClient ImageAnnotatorClient = ImageAnnotatorClient.Create();
         private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
@@ -47,6 +46,64 @@ namespace ChitoseV2
                 }
             });
 
+            commands.CreateCommand("beatmap").Parameter("creator", ParameterType.Unparsed).Do(async (e) =>
+            {
+                try
+                {
+                    await e.Message.Delete();
+
+                    Image image = null;
+                    string temporaryFilePath = Chitose.TempDirectory + "BeatmapImage.png";
+                    try
+                    {
+                        using (var temporaryFile = File.Create(temporaryFilePath))
+                        using (var croppedBeatmapImage = AcquireAndCropBeatmapImage(lastAttachment))
+                        {
+                            croppedBeatmapImage.Save(temporaryFile, System.Drawing.Imaging.ImageFormat.Png);
+                        }
+                        image = await Image.FromFileAsync(temporaryFilePath);
+                        File.Delete(temporaryFilePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new BeatmapAnalysisException("Failed to save image", ex);
+                    }
+
+                    var textList = await ImageAnnotatorClient.DetectTextAsync(image);
+                    string[] beatmapInformation = textList.First().Description.Split('\n');
+                    string beatmapNameAndDifficulty = beatmapInformation[0];
+                    int locationOfBy = beatmapInformation[1].IndexOf("by");
+                    string beatmapper = e.GetArg("creator") != string.Empty ? e.GetArg("creator") : beatmapInformation[1].Substring(locationOfBy + 3);
+                    BeatmapResult beatmapResult = GetBeatmapsByMapper(beatmapper).OrderByDescending(result => Extensions.CalculateSimilarity(result.Name, beatmapNameAndDifficulty)).FirstOrDefault();
+                    if (beatmapResult == null)
+                        throw new BeatmapAnalysisException("Failed to detect creator. Try the command again by specifying the creator.");
+
+                    int splitIndex = -1;
+                    double bestSimilarity = 0.0;
+                    for (int candidateSplitIndex = 0; candidateSplitIndex <= beatmapNameAndDifficulty.Length; candidateSplitIndex++)
+                    {
+                        double candidateSimilarity = Extensions.CalculateSimilarity(beatmapResult.Name, beatmapNameAndDifficulty.Substring(0, candidateSplitIndex));
+                        if (candidateSimilarity > bestSimilarity)
+                        {
+                            splitIndex = candidateSplitIndex;
+                            bestSimilarity = candidateSimilarity;
+                        }
+                    }
+                    string beatmapName = beatmapNameAndDifficulty.Substring(0, splitIndex);
+                    string difficultyName = beatmapNameAndDifficulty.Substring(splitIndex);
+
+                    ReadOnlyCollection<Beatmap> beatmaps = await Api.GetBeatmapsAsync(Chitose.APIKey, null, beatmapResult.SetId, null, null, null, false, null, 20);
+                    Beatmap selectedBeatmap = beatmaps.OrderByDescending(beatmap => Extensions.CalculateSimilarity(beatmap.Version, difficultyName)).FirstOrDefault();
+                    if (selectedBeatmap == null)
+                        throw new BeatmapAnalysisException("Failed to retrieve beatmap");
+                    await e.Channel.SendMessage(FormatBeatmapInformation(selectedBeatmap));
+                }
+                catch (BeatmapAnalysisException exception)
+                {
+                    await e.Channel.SendMessage("Analysis failed: " + exception.Message);
+                }
+            });
+
             client.MessageReceived += async (s, e) =>
             {
                 //Beatmap Info
@@ -71,79 +128,6 @@ namespace ChitoseV2
                 if (e.Message.Embeds.Length == 1)
                 {
                     lastAttachment = e.Message.Embeds[0].Url;
-                }
-                if (e.Message.Text.ToLowerInvariant() == "!beatmap" && (e.Message.Attachments.Length != 0 || lastAttachment != null))
-                {
-                    try
-                    {
-                        if (e.Message.Attachments.Length == 0)
-                        {
-                            await e.Message.Delete();
-                        }
-                        else
-                        {
-                            lastAttachment = e.Message.Attachments[0].Url;
-                        }
-
-                        Image image = null;
-                        string temporaryFilePath = Chitose.TempDirectory + "BeatmapImage.png";
-                        try
-                        {
-                            using (var temporaryFile = File.Create(temporaryFilePath))
-                            using (var croppedBeatmapImage = AcquireAndCropBeatmapImage(lastAttachment))
-                            {
-                                croppedBeatmapImage.Save(temporaryFile, System.Drawing.Imaging.ImageFormat.Png);
-                            }
-                            image = await Image.FromFileAsync(temporaryFilePath);
-                            File.Delete(temporaryFilePath);
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new BeatmapAnalysisException("Failed to save image", ex);
-                        }
-
-                        var textList = await ImageAnnotatorClient.DetectTextAsync(image);
-                        string[] beatmapInformation = textList.First().Description.Split('\n');
-                        string beatmapNameAndDifficulty = beatmapInformation[0];
-                        int locationOfBy = beatmapInformation[1].IndexOf("by");
-                        string beatmapper = beatmapInformation[1].Substring(locationOfBy + 3);
-                        BeatmapResult beatmapResult = GetBeatmapsByMapper(beatmapper).OrderByDescending(result => Extensions.CalculateSimilarity(result.Name, beatmapNameAndDifficulty)).FirstOrDefault();
-                        if (beatmapResult == null)
-                            throw new BeatmapAnalysisException("Failed to detect creator");
-
-                        int splitIndex = -1;
-                        double bestSimilarity = 0.0;
-                        for (int candidateSplitIndex = 0; candidateSplitIndex <= beatmapNameAndDifficulty.Length; candidateSplitIndex++)
-                        {
-                            double candidateSimilarity = Extensions.CalculateSimilarity(beatmapResult.Name, beatmapNameAndDifficulty.Substring(0, candidateSplitIndex));
-                            if (candidateSimilarity > bestSimilarity)
-                            {
-                                splitIndex = candidateSplitIndex;
-                                bestSimilarity = candidateSimilarity;
-                            }
-                        }
-                        string beatmapName = beatmapNameAndDifficulty.Substring(0, splitIndex);
-                        string difficultyName = beatmapNameAndDifficulty.Substring(splitIndex);
-
-                        var beatmapUrl = @"https://osu.ppy.sh/s/" + beatmapResult.SetId;
-                        var beatmapPageSource = WebRequest.CreateHttp(beatmapUrl).GetResponse().GetResponseStream().ReadString();
-                        var difficulties = BeatmapDifficultyMatcher.Matches(beatmapPageSource).Cast<System.Text.RegularExpressions.Match>().Select(match =>
-                        {
-                            var id = int.Parse(match.Groups["difficulty_id"].Value);
-                            var name = match.Groups["difficulty_name"].Value.HtmlDecode();
-                            return new Difficulty(name, id);
-                        });
-                        Difficulty beatmapDifficulty = difficulties.OrderByDescending(difficulty => Extensions.CalculateSimilarity(difficulty.Name, difficultyName)).FirstOrDefault();
-                        if (beatmapDifficulty == null)
-                            throw new BeatmapAnalysisException("Failed to access beatmap");
-                        ReadOnlyCollection<Beatmap> beatmaps = await Api.GetBeatmapsAsync(Chitose.APIKey, null, null, beatmapDifficulty.Id, null, null, false, null, 10);
-                        Beatmap selectedBeatmap = beatmaps.FirstOrDefault();
-                        await e.Channel.SendMessage(FormatBeatmapInformation(selectedBeatmap));
-                    }
-                    catch (BeatmapAnalysisException exception)
-                    {
-                        await e.Channel.SendMessage("Analysis failed: " + exception.Message);
-                    }
                 }
             };
         }

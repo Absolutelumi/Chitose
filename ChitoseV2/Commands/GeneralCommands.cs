@@ -110,6 +110,8 @@ namespace ChitoseV2
 
             client.MessageReceived += async (s, e) =>
             {
+                if (e.Message.Text == string.Empty)
+                    return;
                 TranslationClient translator = TranslationClient.Create();
                 Detection detection = translator.DetectLanguage(e.Message.Text); 
                 if (e.Message.Text.ToLowerInvariant() == "translate")
