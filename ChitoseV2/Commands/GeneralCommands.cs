@@ -4,6 +4,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
+using Google.Cloud.Translation.V2;
 
 namespace ChitoseV2
 {
@@ -96,6 +97,17 @@ namespace ChitoseV2
             commands.CreateCommand("jesus").Parameter("question", ParameterType.Multiple).Do(async (e) =>
             {
                 await e.Channel.SendMessage("Jesus: Lolis are the answer");
+            });
+
+            commands.CreateCommand("translate").Parameter("message", ParameterType.Multiple).Do(async (e) =>
+            {
+                TranslationClient translator = TranslationClient.Create();
+                string text = string.Join(" ", e.Args);
+                Detection sourceLanguage = translator.DetectLanguage(text);
+                Language english = new Language("english", LanguageCodes.English); 
+                TranslationResult response = translator.TranslateText(text, LanguageCodes.English, sourceLanguage.Language);
+
+                await e.Channel.SendMessage(response.TranslatedText); 
             });
         }
     }
