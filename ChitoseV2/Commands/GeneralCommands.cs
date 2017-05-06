@@ -104,11 +104,28 @@ namespace ChitoseV2
                 TranslationClient translator = TranslationClient.Create();
                 string text = string.Join(" ", e.Args);
                 Detection sourceLanguage = translator.DetectLanguage(text);
-                Language english = new Language("english", LanguageCodes.English); 
+                Language english = new Language("english", LanguageCodes.English);
                 TranslationResult response = translator.TranslateText(text, LanguageCodes.English, sourceLanguage.Language);
 
-                await e.Channel.SendMessage(response.TranslatedText); 
+                await e.Channel.SendMessage(response.TranslatedText);
             });
+
+            client.MessageReceived += async (s, e) =>
+            {
+                if(e.Message.Text.ToLowerInvariant() == "translate")
+                {
+                    TranslationClient translator = TranslationClient.Create();
+                    await e.Message.Delete();
+                    Message foreignMessage = e.Channel.Messages.Last();
+                    string text = foreignMessage.Text;
+                    User user = foreignMessage.User; 
+                    Detection sourceLanguage = translator.DetectLanguage(text);
+                    Language english = new Language("english", LanguageCodes.English);
+                    TranslationResult response = translator.TranslateText(text, LanguageCodes.English, sourceLanguage.Language);
+
+                    await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", user.Name, response.TranslatedText));
+                }
+            };
         }
     }
 }
