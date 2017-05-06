@@ -2,6 +2,9 @@
 using Discord;
 using Discord.Audio;
 using Discord.Commands;
+using Google.Apis.Auth.OAuth2;
+using Google.Apis.YouTube.v3;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,8 +24,20 @@ namespace ChitoseV2
         public static readonly string MALUsername = Properties.Settings.Default.MALUsername;
         public static readonly string NSFWPath = Properties.Settings.Default.NSFWPath;
         public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
+        public static readonly ServiceAccountCredential GoogleServiceAccount;
         private char prefix = '!';
         private Random random = new Random();
+
+        static Chitose()
+        {
+            var serviceAccount = JsonConvert.DeserializeObject<JsonCredentialParameters>(File.OpenRead(Properties.Settings.Default.ConfigDirectory + Properties.Settings.Default.GoogleServiceAccount).ReadString());
+            GoogleServiceAccount = new ServiceAccountCredential(new ServiceAccountCredential.Initializer(serviceAccount.ClientEmail)
+            {
+                Scopes =
+                {
+                }
+            }.FromPrivateKey(serviceAccount.PrivateKey));
+        }
 
         public Chitose()
         {

@@ -16,11 +16,10 @@ namespace ChitoseV2
     internal class MusicModule
     {
         public event OnSongChangedHandler OnSongChanged;
-
+        
         private static readonly YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
         {
-            ApiKey = File.OpenRead(Chitose.ConfigDirectory + "youtube.txt").ReadString(),
-            ApplicationName = "Chitose V2"
+            HttpClientInitializer = Chitose.GoogleServiceAccount
         });
 
         private readonly AudioService service;
