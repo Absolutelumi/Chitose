@@ -75,7 +75,7 @@ namespace ChitoseV2
                 {
                     lastAttachment = e.Message.Embeds[0].Url;
                 }
-                if (e.Message.Text.ToLowerInvariant() == "beatmap" && lastAttachment != null)
+                if (e.Message.Text.ToLowerInvariant() == "!beatmap" && lastAttachment != null)
                 {
                     try
                     {
