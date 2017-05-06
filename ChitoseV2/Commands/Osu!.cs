@@ -10,15 +10,16 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Web.Script.Serialization;
 
 namespace ChitoseV2
 {
     internal class Osu_ : ICommandSet
     {
         private static readonly Regex BeatmapDifficultyMatcher = new Regex(@"<a class='beatmapTab (active)?' href='\/b\/(?<difficulty_id>\d+).*<span>(?<difficulty_name>.*)<\/span>");
-        private static readonly Regex BeatmapSearchIdMatcher = new Regex(@"class=""title"" href=""s\/(?<id>\d+)"">(?<name>[^<]+)");
         private static readonly Regex BeatmapUrlMatcher = new Regex(@"(?<full_link>(?<beatmap_link>(https:\/\/)?osu.ppy.sh\/(?<b_s>[bs])\/(?<beatmap_id>\d+))\S*)");
         private static readonly ImageAnnotatorClient ImageAnnotatorClient = ImageAnnotatorClient.Create();
+        private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
         private Api api = new Api(Chitose.APIKey);
         private string lastAttachment;
         private string beatmap { get; set; }
@@ -70,68 +71,77 @@ namespace ChitoseV2
                 {
                     lastAttachment = e.Message.Attachments[0].Url;
                 }
-                if (e.Message.Text.ToLowerInvariant() == "beatmap" && lastAttachment != null)
+                if (e.Message.Embeds.Length == 1)
+                {
+                    lastAttachment = e.Message.Embeds[0].Url;
+                }
+                if (e.Message.Text.ToLowerInvariant() == "!beatmap" && lastAttachment != null)
                 {
                     try
                     {
                         await e.Message.Delete();
                         var croppedBeatmapImage = AcquireAndCropBeatmapImage(lastAttachment);
-                        string tempFile = Chitose.TempDirectory + "BeatmapImage.png";
-                        FileStream imageFile = File.Create(tempFile);
+                        string temporaryFile = Chitose.TempDirectory + "BeatmapImage.png";
+                        FileStream imageFile = File.Create(temporaryFile);
                         croppedBeatmapImage.Save(imageFile, System.Drawing.Imaging.ImageFormat.Png);
                         croppedBeatmapImage.Dispose();
                         imageFile.Close();
-                        var image = await Google.Cloud.Vision.V1.Image.FromFileAsync(tempFile);
-                        File.Delete(tempFile);
+                        var image = await Google.Cloud.Vision.V1.Image.FromFileAsync(temporaryFile);
+                        File.Delete(temporaryFile);
                         var textList = await ImageAnnotatorClient.DetectTextAsync(image);
                         string[] beatmapInformation = textList.First().Description.Split('\n');
-                        string beatmapName = beatmapInformation[0];
+                        string beatmapNameDifficulty = beatmapInformation[0];
                         int locationOfBy = beatmapInformation[1].IndexOf("by");
-                        string creator = beatmapInformation[1].Substring(locationOfBy + 3);
-                        string url = @"http://bloodcat.com/osu/?q=" + creator.UrlEncode();
-                        var beatmapSearch = WebRequest.CreateHttp(url);
+                        string beatmapCreator = beatmapInformation[1].Substring(locationOfBy + 3);
+                        string searchUrl = @"http://osusearch.com/query/?mapper=" + beatmapCreator.UrlEncode();
+                        var beatmapSearch = WebRequest.CreateHttp(searchUrl);
                         string resultPage = beatmapSearch.GetResponse().GetResponseStream().ReadString();
-                        var match = BeatmapSearchIdMatcher.Match(resultPage);
-                        Dictionary<string, int> results = new Dictionary<string, int>();
-                        while (match.Success)
+                        BeatmapSearchResult searchResult = json.Deserialize<BeatmapSearchResult>(resultPage);
+                        int count = searchResult.result_count;
+                        Dictionary<int, string> results = searchResult.beatmaps.ToDictionary(beatmap => beatmap.beatmapset_id, beatmap => beatmap.artist + " " + beatmap.title);
+                        int attempts = 1;
+                        while (results.Count < count)
                         {
-                            int id = int.Parse(match.Groups["id"].Value);
-                            results[match.Groups["name"].Value] = id;
-                            match = match.NextMatch();
+                            beatmapSearch = WebRequest.CreateHttp(searchUrl + "&offset=" + attempts++);
+                            resultPage = beatmapSearch.GetResponse().GetResponseStream().ReadString();
+                            searchResult = json.Deserialize<BeatmapSearchResult>(resultPage);
+                            results = results.Concat(searchResult.beatmaps.ToDictionary(beatmap => beatmap.beatmapset_id, beatmap => beatmap.artist + " " + beatmap.title)).ToDictionary(pair => pair.Key, pair => pair.Value);
                         }
-                        KeyValuePair<string, int> bestResult = results.OrderByDescending(result => Extensions.CalculateSimilarity(result.Key, beatmapName)).First();
+                        KeyValuePair<int, string> bestResult = results.OrderByDescending(result => Extensions.CalculateSimilarity(result.Value, beatmapNameDifficulty)).First();
                         int bestIndex = -1;
                         double bestSimiliarity = 0.0;
-                        for (int i = beatmapName.Length; i > 0; i--)
+                        for (int i = beatmapNameDifficulty.Length; i > 0; i--)
                         {
-                            double similarity = Extensions.CalculateSimilarity(bestResult.Key, beatmapName.Substring(0, i));
+                            double similarity = Extensions.CalculateSimilarity(bestResult.Value, beatmapNameDifficulty.Substring(0, i));
                             if (similarity > bestSimiliarity)
                             {
                                 bestIndex = i;
                                 bestSimiliarity = similarity;
                             }
                         }
-                        string name = beatmapName.Substring(0, bestIndex);
-                        string difficulty = beatmapName.Substring(bestIndex);
-                        var beatmapDifficultySearch = WebRequest.CreateHttp(@"https://osu.ppy.sh/s/" + bestResult.Value);
+                        string name = beatmapNameDifficulty.Substring(0, bestIndex);
+                        string difficulty = beatmapNameDifficulty.Substring(bestIndex);
+                        var beatmapDifficultySearch = WebRequest.CreateHttp(@"https://osu.ppy.sh/s/" + bestResult.Key);
                         resultPage = beatmapDifficultySearch.GetResponse().GetResponseStream().ReadString();
-                        match = BeatmapDifficultyMatcher.Match(resultPage);
+                        var match = BeatmapDifficultyMatcher.Match(resultPage);
                         results.Clear();
                         while (match.Success)
                         {
                             int id = int.Parse(match.Groups["difficulty_id"].Value);
                             string difficultyName = match.Groups["difficulty_name"].Value.HtmlDecode();
-                            results[difficultyName] = id;
+                            results[id] = difficultyName;
                             match = match.NextMatch();
                         }
                         File.WriteAllText(Chitose.TempDirectory + "Html.txt", resultPage);
-                        bestResult = results.OrderByDescending(result => Extensions.CalculateSimilarity(result.Key, difficulty)).First();
-                        ReadOnlyCollection<Beatmap> beatmaps = await Api.GetBeatmapsAsync(Chitose.APIKey, null, null, bestResult.Value, null, null, false, null, 10);
-                        Beatmap beatmap = beatmaps.FirstOrDefault();
+                        bestResult = results.OrderByDescending(result => Extensions.CalculateSimilarity(result.Value, difficulty)).First();
+                        ReadOnlyCollection<Beatmap> beatmaps = await Api.GetBeatmapsAsync(Chitose.APIKey, null, null, bestResult.Key, null, null, false, null, 10);
+                        Beatmap selectedBeatmap = beatmaps.FirstOrDefault();
                         await e.Channel.SendMessage(string.Format("__***{0}***__ by ***{1}*** \n **Created by *{9}***  |  **Status : *{8}*** \n ***Download Link*** : **{10}** \n **Beatmap Info**\n```Ar {2} | Od {3} | Cs {4} | Hp {5} | Stars {6} | BPM {7} | Length {11}``` \n ",
-                                CleanDiscordString(beatmap.Title + " [" + beatmap.Version + "]"), CleanDiscordString(beatmap.Artist), beatmap.DiffApproach, beatmap.DiffOverall, beatmap.DiffSize, beatmap.DiffDrain, Math.Round(Convert.ToDouble(beatmap.DifficultyRating), 2), Convert.ToInt32(beatmap.Bpm), beatmap.Approved.ToString(), beatmap.Creator, @"https://osu.ppy.sh/b/" + bestResult.Value, ToMinutes(beatmap.TotalLength)));
+                                CleanDiscordString(selectedBeatmap.Title + " [" + selectedBeatmap.Version + "]"), CleanDiscordString(selectedBeatmap.Artist), selectedBeatmap.DiffApproach, selectedBeatmap.DiffOverall, selectedBeatmap.DiffSize, selectedBeatmap.DiffDrain, Math.Round(Convert.ToDouble(selectedBeatmap.DifficultyRating), 2), Convert.ToInt32(selectedBeatmap.Bpm), selectedBeatmap.Approved.ToString(), selectedBeatmap.Creator, @"https://osu.ppy.sh/b/" + bestResult.Key, ToMinutes(selectedBeatmap.TotalLength)));
                     }
-                    catch { }
+                    catch (Exception exception)
+                    {
+                    }
                 }
             };
         }
@@ -149,5 +159,22 @@ namespace ChitoseV2
         private string CleanDiscordString(string text) => Regex.Replace(text, @"\*", @" ");
 
         private string ToMinutes(int? seconds) => TimeSpan.FromSeconds(seconds.Value).ToString(@"m\:ss");
+
+#pragma warning disable 0649
+
+        private class BeatmapSearchResult
+        {
+            public Beatmap[] beatmaps;
+            public int result_count;
+
+            public class Beatmap
+            {
+                public string artist;
+                public int beatmapset_id;
+                public string title;
+            }
+        }
     }
+
+#pragma warning restore 0649
 }
