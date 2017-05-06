@@ -107,5 +107,16 @@ namespace ChitoseV2
         {
             return HttpUtility.HtmlDecode(text);
         }
+
+        public static bool StartsWithVowelSound(this int number)
+        {
+            if (number <= 0)
+                return false;
+            while (number >= 1000)
+            {
+                number /= 1000;
+            }
+            return number.ToString()[0] == '8' || number == 11;
+        }
     }
 }

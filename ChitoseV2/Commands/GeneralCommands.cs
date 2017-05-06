@@ -78,22 +78,20 @@ namespace ChitoseV2
                 });
             });
 
-            commands.CreateCommand("rate").Parameter("waifu", ParameterType.Multiple).Do(async (e) =>
+            commands.CreateCommand("rate").Parameter("waifu", ParameterType.Unparsed).Do(async (e) =>
             {
-                string waifu = string.Join(" ", e.Args);
-                uint waifurating;
-
-                waifurating = ((uint)waifu.GetHashCode()) % 101;
+                string waifu = e.GetArg("waifu");
+                var waifuRating = ((uint)waifu.GetHashCode()) % 101;
 
                 if (waifu.ToLowerInvariant() == "shigetora" || waifu.ToLowerInvariant() == "cookiezi")
                 {
-                    waifurating = 727;
+                    waifuRating = 727;
                 }
 
-                await e.Channel.SendMessage(string.Format("{0} is a {1}!", waifu, waifurating));
+                await e.Channel.SendMessage(string.Format("{0} is a{2} {1}!", waifu, waifuRating, ((int)waifuRating).StartsWithVowelSound() ? "n" : string.Empty));
             });
 
-            commands.CreateCommand("jesus").Parameter("question", ParameterType.Multiple).Do(async (e) =>
+            commands.CreateCommand("jesus").Parameter("question", ParameterType.Unparsed).Do(async (e) =>
             {
                 await e.Channel.SendMessage("Jesus: Lolis are the answer");
             });
