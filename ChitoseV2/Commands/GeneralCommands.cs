@@ -110,18 +110,25 @@ namespace ChitoseV2
 
             client.MessageReceived += async (s, e) =>
             {
-                if(e.Message.Text.ToLowerInvariant() == "translate")
+                TranslationClient translator = TranslationClient.Create();
+                Detection detection = translator.DetectLanguage(e.Message.Text); 
+                if (e.Message.Text.ToLowerInvariant() == "translate")
                 {
-                    TranslationClient translator = TranslationClient.Create();
                     await e.Message.Delete();
                     Message foreignMessage = e.Channel.Messages.Last();
                     string text = foreignMessage.Text;
                     User user = foreignMessage.User; 
                     Detection sourceLanguage = translator.DetectLanguage(text);
-                    Language english = new Language("english", LanguageCodes.English);
                     TranslationResult response = translator.TranslateText(text, LanguageCodes.English, sourceLanguage.Language);
 
                     await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", user.Name, response.TranslatedText));
+                }
+                else if (detection.Language != LanguageCodes.Japanese && detection.Language != LanguageCodes.English)
+                {
+                    string text = e.Message.Text;
+                    TranslationResult response = translator.TranslateText(text, LanguageCodes.English, detection.Language, TranslationModel.NeuralMachineTranslation);
+
+                    await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", e.User.Name, response.TranslatedText));
                 }
             };
         }
