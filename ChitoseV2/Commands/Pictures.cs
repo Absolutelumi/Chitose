@@ -144,7 +144,7 @@ namespace ChitoseV2
 
             commands.CreateCommand("NSFW").Parameter("Channel || Enable/Disable").Do((e) =>
             {
-                if(e.Args[0].ToLowerInvariant() != "enable" && e.Args[0].ToLowerInvariant() != "disable")
+                if (e.Args[0].ToLowerInvariant() != "enable" && e.Args[0].ToLowerInvariant() != "disable")
                 {
                     string Channel = string.Join(" ", e.Args);
                     Channel NSFWChannel = e.Server.FindChannels(Channel).FirstOrDefault();

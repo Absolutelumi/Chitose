@@ -3,7 +3,6 @@ using Discord;
 using Discord.Audio;
 using Discord.Commands;
 using Google.Apis.Auth.OAuth2;
-using Google.Apis.YouTube.v3;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -18,15 +17,14 @@ namespace ChitoseV2
         public static readonly string APIKey = Properties.Settings.Default.APIKey;
         public static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
         public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;
+        public static readonly ServiceAccountCredential GoogleServiceAccount;
         public static readonly string ImgurKey = Properties.Settings.Default.ImgurKey;
         public static readonly string ImgurSecret = Properties.Settings.Default.ImgurSecret;
         public static readonly string MALPassword = Properties.Settings.Default.MALPassword;
         public static readonly string MALUsername = Properties.Settings.Default.MALUsername;
         public static readonly string NSFWPath = Properties.Settings.Default.NSFWPath;
         public static readonly string TempDirectory = Properties.Settings.Default.TempDirectory;
-        public static readonly ServiceAccountCredential GoogleServiceAccount;
         private char prefix = '!';
-        private Random random = new Random();
 
         static Chitose()
         {
@@ -65,7 +63,7 @@ namespace ChitoseV2
             client.ExecuteAndWait(async () =>
             {
                 await client.Connect(new StreamReader(File.OpenRead(ConfigDirectory + "token.txt")).ReadToEnd(), TokenType.Bot);
-                client.SetGame(playing[random.Next(0, playing.Length)]);
+                client.SetGame(playing.Random());
             });
         }
     }

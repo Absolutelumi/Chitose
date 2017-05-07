@@ -1,5 +1,4 @@
 ﻿using ChitoseV2;
-using System;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -10,12 +9,10 @@ namespace Mayushii.Services
     internal static class DanbooruService
     {
         private static JavaScriptSerializer json;
-        private static Random random;
 
         static DanbooruService()
         {
             json = new JavaScriptSerializer();
-            random = new Random();
         }
 
         public static string GetRandomImage(string[] arg)

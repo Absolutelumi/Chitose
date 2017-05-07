@@ -18,12 +18,15 @@ namespace ChitoseV2
         /// </summary>
         public static double CalculateSimilarity(string source, string target)
         {
-            if ((source == null) || (target == null)) return 0.0;
-            if ((source.Length == 0) || (target.Length == 0)) return 0.0;
-            if (source == target) return 1.0;
+            if ((source == null) || (target == null))
+                return 0.0;
+            if ((source.Length == 0) || (target.Length == 0))
+                return 0.0;
+            if (source == target)
+                return 1.0;
 
             int stepsToSame = ComputeLevenshteinDistance(source, target);
-            return (1.0 - ((double)stepsToSame / (double)Math.Max(source.Length, target.Length)));
+            return 1.0 - ((double)stepsToSame / Math.Max(source.Length, target.Length));
         }
 
         public static string CleanFileName(string filename)
@@ -36,9 +39,12 @@ namespace ChitoseV2
         /// </summary>
         public static int ComputeLevenshteinDistance(string source, string target)
         {
-            if ((source == null) || (target == null)) return 0;
-            if ((source.Length == 0) || (target.Length == 0)) return 0;
-            if (source == target) return source.Length;
+            if ((source == null) || (target == null))
+                return 0;
+            if ((source.Length == 0) || (target.Length == 0))
+                return 0;
+            if (source == target)
+                return source.Length;
 
             int sourceWordCount = source.Length;
             int targetWordCount = target.Length;
@@ -83,6 +89,11 @@ namespace ChitoseV2
             return filePath;
         }
 
+        public static string HtmlDecode(this string text)
+        {
+            return HttpUtility.HtmlDecode(text);
+        }
+
         public static T Random<T>(this T[] array)
         {
             return array[rng.Next(array.Length)];
@@ -91,21 +102,6 @@ namespace ChitoseV2
         public static string ReadString(this Stream stream)
         {
             return new StreamReader(stream).ReadToEnd();
-        }
-
-        public static string ToTitleCase(this string text)
-        {
-            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text);
-        }
-
-        public static string UrlEncode(this string text)
-        {
-            return HttpUtility.UrlEncode(text);
-        }
-
-        public static string HtmlDecode(this string text)
-        {
-            return HttpUtility.HtmlDecode(text);
         }
 
         public static bool StartsWithVowelSound(this int number)
@@ -117,6 +113,16 @@ namespace ChitoseV2
                 number /= 1000;
             }
             return number.ToString()[0] == '8' || number == 11;
+        }
+
+        public static string ToTitleCase(this string text)
+        {
+            return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text);
+        }
+
+        public static string UrlEncode(this string text)
+        {
+            return HttpUtility.UrlEncode(text);
         }
     }
 }
