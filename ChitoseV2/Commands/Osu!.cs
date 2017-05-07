@@ -122,12 +122,12 @@ namespace ChitoseV2
                     var match = BeatmapUrlMatcher.Match(e.Message.Text);
                     string link = match.Groups["beatmap_link"].Value;
                     bool isSet = match.Groups["b_s"].Value == "s";
-                    long? BMID = long.Parse(match.Groups["beatmap_id"].Value);
+                    long? beatmapId = long.Parse(match.Groups["beatmap_id"].Value);
                     if (match.Groups["full_link"].Value == e.Message.Text)
                     {
                         await e.Message.Delete();
                     }
-                    ReadOnlyCollection<Beatmap> beatmaps = await OsuApi.GetBeatmapsAsync(s: (isSet ? BMID : null), b: (isSet ? null : BMID), limit: (isSet ? 20 : 1));
+                    ReadOnlyCollection<Beatmap> beatmaps = await (isSet ? OsuApi.GetBeatmapsAsync(s: beatmapId, limit: 20) : OsuApi.GetBeatmapsAsync(b: beatmapId, limit: 1));
                     await e.Channel.SendMessage(isSet ? FormatBeatmapSetInformation(new BeatmapSet(beatmaps)) : FormatBeatmapInformation(beatmaps.First()));
                 }
 
