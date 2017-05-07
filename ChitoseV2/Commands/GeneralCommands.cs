@@ -113,7 +113,9 @@ namespace ChitoseV2
                 if (e.Message.Text == string.Empty)
                     return;
                 TranslationClient translator = TranslationClient.Create();
-                Detection detection = translator.DetectLanguage(e.Message.Text); 
+                Detection detection = translator.DetectLanguage(e.Message.Text);
+                if (detection.IsReliable == false)
+                    return;
                 if (e.Message.Text.ToLowerInvariant() == "translate")
                 {
                     await e.Message.Delete();
