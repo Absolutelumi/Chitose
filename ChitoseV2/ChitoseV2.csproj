@@ -203,10 +203,10 @@
     <Compile Include="Framework\Extensions.cs" />
     <Compile Include="Commands\GeneralCommands.cs" />
     <Compile Include="Commands\Japanese.cs" />
-    <Compile Include="Commands\MAL.cs" />
+    <Compile Include="Commands\MalCommands.cs" />
     <Compile Include="Commands\MusicCommands.cs" />
     <Compile Include="Framework\MusicModule.cs" />
-    <Compile Include="API-Request\myAnimeList.cs" />
+    <Compile Include="API-Request\Mal.cs" />
     <Compile Include="Commands\Osu!.cs" />
     <Compile Include="Commands\Pictures.cs" />
     <Compile Include="Framework\NsfwManager.cs" />

@@ -4,12 +4,13 @@ using System.Xml;
 
 namespace ChitoseV2
 {
-    internal class myAnimeList
+    internal static class Mal
     {
         public static AnimeResult FindMyAnime(string search, string username, string password)
         {
-            HttpWebRequest request = WebRequest.CreateHttp($"https://myanimelist.net/api/anime/search.xml?q={search}");
+            HttpWebRequest request = WebRequest.CreateHttp($"https://myanimelist.net/api/anime/search.xml?q={search.UrlEncode()}");
             request.Headers.Add("Authorization", $"Basic {System.Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes($"{username}:{password}"))}");
+            request.KeepAlive = false;
             try
             {
                 using (Stream stream = request.GetResponse().GetResponseStream())
@@ -24,7 +25,7 @@ namespace ChitoseV2
                         {
                             valid = true,
                             title = answer["title"].InnerText,
-                            synopsis = answer["synopsis"].InnerText,
+                            synopsis = answer["synopsis"].InnerText.HtmlDecode(),
                             image = answer["image"].InnerText
                         };
                     }
