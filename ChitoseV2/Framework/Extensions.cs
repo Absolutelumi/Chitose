@@ -52,15 +52,20 @@ namespace ChitoseV2
             // Step 1
             if (sourceWordCount == 0)
                 return targetWordCount;
-
             if (targetWordCount == 0)
                 return sourceWordCount;
 
             int[,] distance = new int[sourceWordCount + 1, targetWordCount + 1];
 
             // Step 2
-            for (int i = 0; i <= sourceWordCount; distance[i, 0] = i++) ;
-            for (int j = 0; j <= targetWordCount; distance[0, j] = j++) ;
+            for (int i = 0; i <= sourceWordCount; i++)
+            {
+                distance[i, 0] = i;
+            }
+            for (int j = 0; j <= targetWordCount; j++)
+            {
+                distance[0, j] = j;
+            }
 
             for (int i = 1; i <= sourceWordCount; i++)
             {
@@ -70,10 +75,9 @@ namespace ChitoseV2
                     int cost = (target[j - 1] == source[i - 1]) ? 0 : 1;
 
                     // Step 4
-                    distance[i, j] = Math.Min(Math.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1), distance[i - 1, j - 1] + cost);
+                    distance[i, j] = Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1, distance[i - 1, j - 1] + cost);
                 }
             }
-
             return distance[sourceWordCount, targetWordCount];
         }
 
@@ -92,6 +96,16 @@ namespace ChitoseV2
         public static string HtmlDecode(this string text)
         {
             return HttpUtility.HtmlDecode(text);
+        }
+
+        public static T Max<T>(params T[] values)
+        {
+            return values.Max();
+        }
+
+        public static T Min<T>(params T[] values)
+        {
+            return values.Min();
         }
 
         public static T Random<T>(this T[] array)
