@@ -16,7 +16,7 @@ namespace ChitoseV2
             commands.CreateCommand("anime").Parameter("animename", ParameterType.Unparsed).Do(async (e) =>
             {
                 string title = e.GetArg("animename");
-                string temporaryFile = Chitose.TempDirectory + title + " Pic.png";
+                string temporaryFile = Extensions.CleanFileName(Chitose.TempDirectory + title + " Pic.png");
                 Mal.AnimeResult anime = Mal.FindMyAnime(title, Chitose.MALUsername, Chitose.MALPassword);
                 using (WebClient downloadclient = new WebClient())
                 {
