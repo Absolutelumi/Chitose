@@ -108,33 +108,33 @@ namespace ChitoseV2
                 await e.Channel.SendMessage(response.TranslatedText);
             });
 
-            client.MessageReceived += async (s, e) =>
-            {
-                if (e.Message.Text == string.Empty)
-                    return;
-                TranslationClient translator = TranslationClient.Create();
-                Detection detection = translator.DetectLanguage(e.Message.Text);
-                if (detection.IsReliable == false)
-                    return;
-                if (e.Message.Text.ToLowerInvariant() == "translate")
-                {
-                    await e.Message.Delete();
-                    Message foreignMessage = e.Channel.Messages.Last();
-                    string text = foreignMessage.Text;
-                    User user = foreignMessage.User; 
-                    Detection sourceLanguage = translator.DetectLanguage(text);
-                    TranslationResult response = translator.TranslateText(text, LanguageCodes.English, sourceLanguage.Language);
+            //client.MessageReceived += async (s, e) =>
+            //{
+            //    if (e.Message.Text == string.Empty)
+            //        return;
+            //    TranslationClient translator = TranslationClient.Create();
+            //    Detection detection = translator.DetectLanguage(e.Message.Text);
+            //    if (detection.IsReliable == false)
+            //        return;
+            //    if (e.Message.Text.ToLowerInvariant() == "translate")
+            //    {
+            //        await e.Message.Delete();
+            //        Message foreignMessage = e.Channel.Messages.Last();
+            //        string text = foreignMessage.Text;
+            //        User user = foreignMessage.User; 
+            //        Detection sourceLanguage = translator.DetectLanguage(text);
+            //        TranslationResult response = translator.TranslateText(text, LanguageCodes.English, sourceLanguage.Language);
 
-                    await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", user.Name, response.TranslatedText));
-                }
-                else if (detection.Language != LanguageCodes.Japanese && detection.Language != LanguageCodes.English)
-                {
-                    string text = e.Message.Text;
-                    TranslationResult response = translator.TranslateText(text, LanguageCodes.English, detection.Language, TranslationModel.NeuralMachineTranslation);
+            //        await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", user.Name, response.TranslatedText));
+            //    }
+            //    else if (detection.Language != LanguageCodes.Japanese && detection.Language != LanguageCodes.English)
+            //    {
+            //        string text = e.Message.Text;
+            //        TranslationResult response = translator.TranslateText(text, LanguageCodes.English, detection.Language, TranslationModel.NeuralMachineTranslation);
 
-                    await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", e.User.Name, response.TranslatedText));
-                }
-            };
+            //        await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", e.User.Name, response.TranslatedText));
+            //    }
+            //};
         }
     }
 }
