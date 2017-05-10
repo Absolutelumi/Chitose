@@ -1,10 +1,10 @@
 ﻿using Discord;
 using Discord.Commands;
+using Google.Cloud.Translation.V2;
 using System;
 using System.IO;
 using System.Linq;
 using System.Net;
-using Google.Cloud.Translation.V2;
 
 namespace ChitoseV2
 {
@@ -21,7 +21,7 @@ namespace ChitoseV2
 
             commands.CreateCommand("myav").Do(async (e) => { await e.Channel.SendMessage(string.Format("{0}'s avatar is:  {1}", e.User.Mention, e.User.AvatarUrl)); });
 
-            commands.CreateCommand("av").Parameter("user").Do(async (e) => 
+            commands.CreateCommand("av").Parameter("user").Do(async (e) =>
             {
                 User user = e.Server.FindUsers(string.Join(" ", e.Args)).FirstOrDefault();
                 await e.Channel.SendMessage(string.Format("{0}'s avatar is {1}", user.Mention, user.AvatarUrl));
@@ -121,16 +121,15 @@ namespace ChitoseV2
             //        await e.Message.Delete();
             //        Message foreignMessage = e.Channel.Messages.Last();
             //        string text = foreignMessage.Text;
-            //        User user = foreignMessage.User; 
+            //        User user = foreignMessage.User;
             //        Detection sourceLanguage = translator.DetectLanguage(text);
             //        TranslationResult response = translator.TranslateText(text, LanguageCodes.English, sourceLanguage.Language);
 
-            //        await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", user.Name, response.TranslatedText));
-            //    }
-            //    else if (detection.Language != LanguageCodes.Japanese && detection.Language != LanguageCodes.English)
-            //    {
-            //        string text = e.Message.Text;
-            //        TranslationResult response = translator.TranslateText(text, LanguageCodes.English, detection.Language, TranslationModel.NeuralMachineTranslation);
+            // await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", user.Name,
+            // response.TranslatedText)); } else if (detection.Language != LanguageCodes.Japanese &&
+            // detection.Language != LanguageCodes.English) { string text = e.Message.Text;
+            // TranslationResult response = translator.TranslateText(text, LanguageCodes.English,
+            // detection.Language, TranslationModel.NeuralMachineTranslation);
 
             //        await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", e.User.Name, response.TranslatedText));
             //    }

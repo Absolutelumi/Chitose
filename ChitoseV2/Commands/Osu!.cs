@@ -61,16 +61,15 @@ namespace ChitoseV2
                     await e.Message.Delete();
 
                     Image image = null;
-                    var temporaryFilePath = Chitose.TempDirectory + "BeatmapImage.png";
                     try
                     {
-                        using (var temporaryFile = File.Create(temporaryFilePath))
+                        using (var temporaryStream = new MemoryStream())
                         using (Sd.Bitmap croppedBeatmapImage = AcquireAndCropBeatmapImage(lastAttachment))
                         {
-                            croppedBeatmapImage.Save(temporaryFile, Sd.Imaging.ImageFormat.Png);
+                            croppedBeatmapImage.Save(temporaryStream, Sd.Imaging.ImageFormat.Png);
+                            temporaryStream.Position = 0;
+                            image = await Image.FromStreamAsync(temporaryStream);
                         }
-                        image = await Image.FromFileAsync(temporaryFilePath);
-                        File.Delete(temporaryFilePath);
                     }
                     catch (Exception exception)
                     {
