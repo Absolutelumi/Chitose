@@ -81,9 +81,9 @@ namespace ChitoseV2
                     string beatmapNameAndDifficulty = beatmapInformation[0];
                     int locationOfBy = beatmapInformation[1].IndexOf("by");
                     string beatmapper = (e.GetArg("creator") != string.Empty) ? e.GetArg("creator") : beatmapInformation[1].Substring(locationOfBy + 3);
-                    BeatmapResult beatmapResult = GetBeatmapsByMapper(beatmapper)
-                        .OrderByDescending(result => Extensions.CalculateSimilarity(result.Name, beatmapNameAndDifficulty))
-                        .FirstOrDefault();
+                    IEnumerable<BeatmapResult> sortedBeatmaps = GetBeatmapsByMapper(beatmapper)
+                        .OrderByDescending(result => Extensions.CalculateSimilarity(result.Name, beatmapNameAndDifficulty));
+                    BeatmapResult beatmapResult = sortedBeatmaps.FirstOrDefault();
                     if (beatmapResult == null)
                         throw new BeatmapAnalysisException("Failed to detect creator. Try the command again by specifying the creator.");
 
@@ -101,8 +101,12 @@ namespace ChitoseV2
                     var beatmapName = beatmapNameAndDifficulty.Substring(0, splitIndex);
                     var difficultyName = beatmapNameAndDifficulty.Substring(splitIndex);
 
-                    ReadOnlyCollection<Beatmap> beatmaps = await OsuApi.GetBeatmapsAsync(s: beatmapResult.SetId, limit: 20);
-                    var selectedBeatmap = beatmaps.OrderByDescending(beatmap => Extensions.CalculateSimilarity(beatmap.Version, difficultyName)).FirstOrDefault();
+                    IEnumerable<Beatmap> potentialBeatmaps = Enumerable.Empty<Beatmap>();
+                    foreach (BeatmapResult potentialBeatmapResult in sortedBeatmaps.TakeWhile(result => Extensions.CalculateSimilarity(result.Name, beatmapName) / bestSimilarity > 0.99))
+                    {
+                        potentialBeatmaps = potentialBeatmaps.Concat(await OsuApi.GetBeatmapsAsync(s: potentialBeatmapResult.SetId, limit: 20));
+                    }
+                    var selectedBeatmap = potentialBeatmaps.OrderByDescending(beatmap => Extensions.CalculateSimilarity(beatmap.Version, difficultyName)).FirstOrDefault();
                     if (selectedBeatmap == null)
                         throw new BeatmapAnalysisException("Failed to retrieve beatmap");
                     await e.Channel.SendMessage(FormatBeatmapInformation(selectedBeatmap));
