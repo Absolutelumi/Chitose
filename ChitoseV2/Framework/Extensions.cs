@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Discord;
+using System;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace ChitoseV2
@@ -81,16 +83,12 @@ namespace ChitoseV2
             return distance[sourceWordCount, targetWordCount];
         }
 
-        public static string DownloadFile(string url)
+        public static Stream GetHttpStream(Uri uri)
         {
-            string filePath = Chitose.TempDirectory + "Temp" + ".png";
-
-            using (WebClient downloadclient = new WebClient())
-            {
-                downloadclient.DownloadFile(new Uri(url), filePath);
-            }
-
-            return filePath;
+            HttpWebRequest getRequest = WebRequest.CreateHttp(uri);
+            getRequest.Method = "GET";
+            WebResponse response = getRequest.GetResponse();
+            return response.GetResponseStream();
         }
 
         public static string HtmlDecode(this string text)
@@ -116,6 +114,11 @@ namespace ChitoseV2
         public static string ReadString(this Stream stream)
         {
             return new StreamReader(stream).ReadToEnd();
+        }
+
+        public static async Task SendFile(this Channel channel, Uri url)
+        {
+            await channel.SendFile(Path.GetFileName(url.LocalPath), GetHttpStream(url));
         }
 
         public static bool StartsWithVowelSound(this int number)

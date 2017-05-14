@@ -9,7 +9,6 @@ using RedditSharp;
 using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 
 namespace ChitoseV2
 {
@@ -37,46 +36,51 @@ namespace ChitoseV2
 
         private static void AddPictureEditingCommands(CommandService commands)
         {
-            using (ImageFactory imagefactory = new ImageFactory(preserveExifData: true))
+            commands.CreateCommand("blur").Parameter("blurlvl").Parameter("picture").Do(async (e) =>
             {
-                commands.CreateCommand("blur").Parameter("blurlvl/picture", ParameterType.Multiple).Do(async (e) =>
+                int blurlvl = int.Parse(e.GetArg("blurlvl"));
+                string imageLink = e.GetArg("picture");
+
+                using (ImageFactory imagefactory = new ImageFactory(preserveExifData: true))
+                using (var stream = new MemoryStream())
                 {
-                    int blurlvl = Convert.ToInt32(e.Args[0]);
-                    string ImageLink = e.Args[1];
-                    string ImagePath = Extensions.DownloadFile(ImageLink);
+                    var image = imagefactory.Load(Extensions.GetHttpStream(new Uri(imageLink)));
+                    image.GaussianBlur(blurlvl).Save(stream);
+                    var imageName = Path.GetFileNameWithoutExtension(imageLink) + "." + image.CurrentImageFormat.DefaultExtension;
+                    await e.Channel.SendFile(imageName, stream);
+                }
+            });
 
-                    imagefactory.Load(ImagePath).GaussianBlur(blurlvl).Save(ImagePath);
+            commands.CreateCommand("tint").Parameter("color").Parameter("picture").Do(async (e) =>
+            {
+                string color = e.GetArg("color");
+                string imageLink = e.GetArg("picture");
 
-                    await e.Channel.SendFile(ImagePath);
-
-                    File.Delete(ImagePath);
-                });
-
-                commands.CreateCommand("tint").Parameter("color/picture", ParameterType.Multiple).Do(async (e) =>
+                using (ImageFactory imagefactory = new ImageFactory(preserveExifData: true))
+                using (var stream = new MemoryStream())
                 {
-                    string color = e.Args[0];
-                    string picture = e.Args[1];
+                    var image = imagefactory.Load(Extensions.GetHttpStream(new Uri(imageLink)));
+                    image.Tint(System.Drawing.Color.FromName(color)).Save(stream);
+                    var imageName = Path.GetFileNameWithoutExtension(imageLink) + "." + image.CurrentImageFormat.DefaultExtension;
+                    await e.Channel.SendFile(imageName, stream);
+                }
+            });
 
-                    string ImagePath = Extensions.DownloadFile(picture);
+            commands.CreateCommand("replacecolor").Parameter("targetCol").Parameter("replaceCol").Parameter("picture").Do(async (e) =>
+            {
+                string targetCol = e.GetArg("targetCol");
+                string replaceCol = e.GetArg("replaceCol");
+                string imageLink = e.GetArg("picture");
 
-                    imagefactory.Tint(System.Drawing.Color.FromName(color)).Save(ImagePath);
-                    await e.Channel.SendFile(ImagePath);
-                    File.Delete(ImagePath);
-                });
-
-                commands.CreateCommand("replacecolor").Parameter("targetCol/replaceCol/Image", ParameterType.Multiple).Do(async (e) =>
+                using (ImageFactory imagefactory = new ImageFactory(preserveExifData: true))
+                using (var stream = new MemoryStream())
                 {
-                    string targetCol = e.Args[0];
-                    string replaceCol = e.Args[1];
-                    string Imagelink = e.Args[2];
-
-                    string Imagepath = Extensions.DownloadFile(Imagelink);
-
-                    imagefactory.Load(Imagepath).ReplaceColor(System.Drawing.Color.FromName(targetCol), System.Drawing.Color.FromName(replaceCol)).Save(Imagepath);
-
-                    await e.Channel.SendFile(Imagepath);
-                });
-            }
+                    var image = imagefactory.Load(Extensions.GetHttpStream(new Uri(imageLink)));
+                    image.ReplaceColor(System.Drawing.Color.FromName(targetCol), System.Drawing.Color.FromName(replaceCol)).Save(stream);
+                    var imageName = Path.GetFileNameWithoutExtension(imageLink) + "." + image.CurrentImageFormat.DefaultExtension;
+                    await e.Channel.SendFile(imageName, stream);
+                }
+            });
         }
 
         private void AddGeneralCommands(CommandService commands)
@@ -97,16 +101,7 @@ namespace ChitoseV2
             {
                 string[] arg = e.Args;
                 string url = DanbooruService.GetRandomImage(arg);
-                string temppath = Chitose.TempDirectory + arg.ToString() + "booru.png";
-
-                using (WebClient downloadclient = new WebClient())
-                {
-                    downloadclient.DownloadFile(new Uri(url), temppath);
-                }
-
-                await e.Channel.SendFile(temppath);
-
-                File.Delete(temppath);
+                await e.Channel.SendFile(new Uri(url));
             });
         }
 

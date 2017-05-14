@@ -2,7 +2,6 @@
 using Discord.Commands;
 using System;
 using System.IO;
-using System.Net;
 
 namespace ChitoseV2
 {
@@ -22,13 +21,7 @@ namespace ChitoseV2
                     cgb.CreateCommand(command[0]).Description(command[0].ToTitleCase() + " Chitose").Do(async (e) =>
                     {
                         string url = urls.Random();
-                        string temppath = Chitose.TempDirectory + command[0].ToTitleCase() + " Chitose.png";
-                        using (WebClient downloadclient = new WebClient())
-                        {
-                            downloadclient.DownloadFile(new Uri(url), temppath);
-                        }
-                        await e.Channel.SendFile(temppath);
-                        File.Delete(temppath);
+                        await e.Channel.SendFile(new Uri(url));
                         await e.Message.Delete();
                     });
                     line = filereader.ReadLine();

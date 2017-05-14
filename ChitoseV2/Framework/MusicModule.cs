@@ -16,7 +16,7 @@ namespace ChitoseV2
     internal class MusicModule
     {
         public event OnSongChangedHandler OnSongChanged;
-        
+
         private static readonly YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
         {
             HttpClientInitializer = Chitose.GoogleServiceAccount

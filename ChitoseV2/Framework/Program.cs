@@ -4,7 +4,7 @@
     {
         private static void Main(string[] args)
         {
-            Chitose bot = new ChitoseV2.Chitose(); 
+            Chitose bot = new Chitose();
         }
     }
 }
