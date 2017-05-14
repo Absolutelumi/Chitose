@@ -114,6 +114,26 @@ namespace ChitoseV2
                 }
             });
 
+            commands.CreateCommand("leaderboards").Parameter("beatmap").Do(async (e) =>
+            {
+                if (BeatmapUrlMatcher.IsMatch(e.Message.Text) && e.Message.User.IsBot == false)
+                {
+                    var match = BeatmapUrlMatcher.Match(e.Message.Text);
+                    string link = match.Groups["beatmap_link"].Value;
+                    bool isSet = match.Groups["b_s"].Value == "s";
+                    bool first = false; 
+                    long? beatmapId = long.Parse(match.Groups["beatmap_id"].Value);
+                    if (match.Groups["full_link"].Value == e.Message.Text)
+                    {
+                        await e.Message.Delete();
+                    }
+                    ReadOnlyCollection<Beatmap> beatmaps = await (isSet ? OsuApi.GetBeatmapsAsync(s: beatmapId, limit: 20) : OsuApi.GetBeatmapsAsync(b: beatmapId, limit: 1));
+                    ReadOnlyCollection<Scores> scores = await OsuApi.GetScoresAsync(b: (long)beatmaps.First().BeatmapId, m: Mods.None, limit: 50);
+
+                    await e.Channel.SendMessage(FormatLeaderboardInformation(scores)); 
+                }
+            });
+
             client.MessageReceived += async (s, e) =>
             {
                 //Beatmap Info
@@ -200,6 +220,11 @@ namespace ChitoseV2
                 .AppendLine($"Stars {beatmapSet.Stars.Format("#.##")} | BPM {beatmapSet.Bpm:#.##} | Length {ToMinutes(beatmapSet.Length)}")
                 .AppendLine("```")
                 .ToString();
+        }
+
+        private string FormatLeaderboardInformation(ReadOnlyCollection<Scores> scores)
+        {
+
         }
 
         private string ToMinutes(int? seconds) => TimeSpan.FromSeconds(seconds.Value).ToString(@"m\:ss");
