@@ -1,0 +1,3 @@
+[submodule "Osu-Sharp"]
+	path = Osu-Sharp
+	url = https://github.com/Absolutelumi/Osu-Sharp.git
