@@ -9,7 +9,6 @@ namespace OsuApi.Model
     public class Score
     {
 
-
         #region Json Fields
 
         public int score;
