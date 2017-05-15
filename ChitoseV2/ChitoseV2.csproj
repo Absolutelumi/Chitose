@@ -241,9 +241,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\osu-api-master\osu!api\osu!api.csproj">
-      <Project>{e8a96fb5-7e4c-4706-b104-ac65abc1c5a7}</Project>
-      <Name>osu!api</Name>
+    <ProjectReference Include="..\OsuApi\OsuApi.csproj">
+      <Project>{426b006f-2c0c-4f3c-8698-ce60d4b4b1d9}</Project>
+      <Name>OsuApi</Name>
     </ProjectReference>
     <ProjectReference Include="..\RedditSharp\RedditSharp\RedditSharp.csproj">
       <Project>{a368cb75-75f0-4489-904d-b5cebb0fe624}</Project>
