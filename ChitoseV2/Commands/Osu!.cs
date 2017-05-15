@@ -40,7 +40,7 @@ namespace ChitoseV2
                     .AppendLine($"User Best: **{bestPlay.Title} [{bestPlay.version}]** giving __**{bestScore.PP}pp**__")
                     .AppendLine("```")
                     .AppendLine($"Rank: {user.Rank}")
-                    .AppendLine($"Performance Points: {user.PPRaw}")
+                    .AppendLine($"Performance Points: {user.RawPP}")
                     .AppendLine($"Country: {user.Country}")
                     .AppendLine($"Country Rank: {user.CountryRank}")
                     .AppendLine($"Level: {user.Level}")
