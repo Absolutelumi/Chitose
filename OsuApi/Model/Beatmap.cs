@@ -4,33 +4,33 @@ namespace OsuApi.Model
 {
     public class Beatmap
     {
-        public double ApproachRate { get => diff_approach; }
-        public DateTime ApprovalDate { get => DateTime.Parse(approved_date); }
-        public string Artist { get => artist; }
-        public string BeatmapId { get => beatmap_id; }
-        public string Beatmapper { get => creator; }
-        public string BeatmapSetId { get => beatmapset_id; }
-        public double Bpm { get => bpm; }
-        public double CircleSize { get => diff_size; }
-        public string Difficulty { get => version; }
-        public int DrainLength { get => hit_length; }
-        public Genre Genre { get => (Genre)genre_id; }
-        public double HealthDrain { get => diff_drain; }
-        public Language Language { get => (Language)language_id; }
-        public DateTime LastUpdate { get => DateTime.Parse(last_update); }
-        public int MaxCombo { get => max_combo; }
-        public string Md5Hash { get => file_md5; }
-        public Mode Mode { get => (Mode)mode; }
-        public int NumberOfFavorites { get => favorite_count; }
-        public int NumberOfPasses { get => passcount; }
-        public int NumberOfPlays { get => playcount; }
-        public double OverallDifficulty { get => diff_overall; }
-        public string Source { get => source; }
-        public double Stars { get => difficultyrating; }
-        public Status Status { get => (Status)approved; }
-        public string[] Tags { get => tags.Split(' '); }
-        public string Title { get => title; }
-        public int TotalLength { get => total_length; }
+        public double ApproachRate { get { return diff_approach; } }
+        public DateTime ApprovalDate { get { return DateTime.Parse(approved_date); } }
+        public string Artist { get { return artist; } }
+        public string BeatmapId { get { return beatmap_id; } }
+        public string Beatmapper { get { return creator; } }
+        public string BeatmapSetId { get { return beatmapset_id; } }
+        public double Bpm { get { return bpm; } }
+        public double CircleSize { get { return diff_size; } }
+        public string Difficulty { get { return version; } }
+        public int DrainLength { get { return hit_length; } }
+        public Genre Genre { get { return (Genre)genre_id; } }
+        public double HealthDrain { get { return diff_drain; } }
+        public Language Language { get { return (Language)language_id; } }
+        public DateTime LastUpdate { get { return DateTime.Parse(last_update); } }
+        public int MaxCombo { get { return max_combo; } }
+        public string Md5Hash { get { return file_md5; } }
+        public Mode Mode { get { return (Mode)mode; } }
+        public int NumberOfFavorites { get { return favorite_count; } }
+        public int NumberOfPasses { get { return passcount; } }
+        public int NumberOfPlays { get { return playcount; } }
+        public double OverallDifficulty { get { return diff_overall; } }
+        public string Source { get { return source; } }
+        public double Stars { get { return difficultyrating; } }
+        public Status Status { get { return (Status)approved; } }
+        public string[] Tags { get { return tags.Split(' '); } }
+        public string Title { get { return title; } }
+        public int TotalLength { get { return total_length; } }
 
         #region Json Fields
 
