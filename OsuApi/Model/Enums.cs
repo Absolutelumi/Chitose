@@ -48,4 +48,11 @@
         Qualified = 3,
         Loved = 4
     }
+
+    public enum UserCredentialType
+    {
+        Auto,
+        Username,
+        UserId
+    }
 }

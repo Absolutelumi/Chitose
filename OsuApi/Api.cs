@@ -22,5 +22,10 @@ namespace OsuApi
         {
             return new BeatmapQuery(ApiKey);
         }
+
+        public IUserSpecificQuery User()
+        {
+            return new UserQuery(ApiKey); 
+        }
     }
 }
