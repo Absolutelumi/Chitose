@@ -55,13 +55,13 @@ namespace Mayushii.Services
 
         private class Post
         {
-            public string large_file_url;
+            public string source;
 
             public string ImageUrl
             {
                 get
                 {
-                    return string.IsNullOrEmpty(large_file_url) ? null : "https://danbooru.donmai.us" + large_file_url;
+                    return source;
                 }
             }
         }

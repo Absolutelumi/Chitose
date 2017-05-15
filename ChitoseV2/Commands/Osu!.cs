@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
 using Google.Cloud.Vision.V1;
-using Osu;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,6 +11,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 using Sd = System.Drawing;
+using OsuApi;
+using OsuApi.Model;
 
 namespace ChitoseV2
 {
@@ -145,12 +146,12 @@ namespace ChitoseV2
                     var match = BeatmapUrlMatcher.Match(e.Message.Text);
                     string link = match.Groups["beatmap_link"].Value;
                     bool isSet = match.Groups["b_s"].Value == "s";
-                    long? beatmapId = long.Parse(match.Groups["beatmap_id"].Value);
+                    string beatmapId = match.Groups["beatmap_id"].Value;
                     if (match.Groups["full_link"].Value == e.Message.Text)
                     {
                         await e.Message.Delete();
                     }
-                    ReadOnlyCollection<Beatmap> beatmaps = await (isSet ? OsuApi.GetBeatmapsAsync(s: beatmapId, limit: 20) : OsuApi.GetBeatmapsAsync(b: beatmapId, limit: 1));
+                    Beatmap[] beatmaps = await (isSet ? OsuApi.BeatmapSet().WithSetId(beatmapId).GetBeatmaps() : OsuApi.SpecificBeatmap().WithId(beatmapId).GetBeatmaps(1));
                     await e.Channel.SendMessage(isSet ? FormatBeatmapSetInformation(new BeatmapSet(beatmaps)) : FormatBeatmapInformation(beatmaps.First()));
                 }
 
@@ -200,13 +201,13 @@ namespace ChitoseV2
         private string FormatBeatmapInformation(Beatmap beatmap)
         {
             return new StringBuilder()
-                .AppendLine($"__***{CleanDiscordString(beatmap.Title)} [{CleanDiscordString(beatmap.Version)}]***__  by ***{CleanDiscordString(beatmap.Artist)}***")
-                .AppendLine($"**Created by *{beatmap.Creator}***  |  **Status : *{beatmap.Approved}***")
+                .AppendLine($"__***{CleanDiscordString(beatmap.Title)} [{CleanDiscordString(beatmap.Difficulty)}]***__  by ***{CleanDiscordString(beatmap.Artist)}***")
+                .AppendLine($"**Created by *{beatmap.Beatmapper}***  |  **Status : *{beatmap.Status}***")
                 .AppendLine($"***Download Link*** : **https://osu.ppy.sh/b/{beatmap.BeatmapId}**")
                 .AppendLine("**Beatmap Info**")
                 .AppendLine("```")
-                .Append($"AR {beatmap.DiffApproach} | OD {beatmap.DiffOverall} | CS {beatmap.DiffSize} | HP {beatmap.DiffDrain} | ")
-                .AppendLine($"Stars {beatmap.DifficultyRating:#.##} | BPM {beatmap.Bpm:#.##} | Length {ToMinutes(beatmap.TotalLength)}")
+                .Append($"AR {beatmap.ApproachRate} | OD {beatmap.OverallDifficulty} | CS {beatmap.CircleSize} | HP {beatmap.HealthDrain} | ")
+                .AppendLine($"Stars {beatmap.Stars:#.##} | BPM {beatmap.Bpm:#.##} | Length {ToMinutes(beatmap.TotalLength)}")
                 .AppendLine("```")
                 .ToString();
         }
@@ -215,7 +216,7 @@ namespace ChitoseV2
         {
             return new StringBuilder()
                 .AppendLine($"__***{CleanDiscordString(beatmapSet.Title)}***__  by ***{CleanDiscordString(beatmapSet.Artist)}***")
-                .AppendLine($"**Created by *{beatmapSet.Creator}***  |  **Status : *{beatmapSet.Status}***")
+                .AppendLine($"**Created by *{beatmapSet.Beatmapper}***  |  **Status : *{beatmapSet.Status}***")
                 .AppendLine($"***Download Link*** : **https://osu.ppy.sh/s/{beatmapSet.Id}**")
                 .AppendLine("**Beatmap Info**")
                 .AppendLine("```")
@@ -227,7 +228,7 @@ namespace ChitoseV2
 
         private string FormatLeaderboardInformation(ReadOnlyCollection<Scores> scores)
         {
-
+            return "";
         }
 
         private string ToMinutes(int? seconds) => TimeSpan.FromSeconds(seconds.Value).ToString(@"m\:ss");
@@ -282,10 +283,10 @@ namespace ChitoseV2
             public string Artist { get; private set; }
             public double Bpm { get; private set; }
             public Interval CircleSize { get; private set; }
-            public string Creator { get; private set; }
+            public string Beatmapper { get; private set; }
             public ReadOnlyCollection<string> Difficulties { get; private set; }
             public Interval HealthDrain { get; private set; }
-            public int Id { get; private set; }
+            public string Id { get; private set; }
             public int Length { get; private set; }
             public Interval OverallDifficulty { get; private set; }
             public Interval Stars { get; private set; }
@@ -294,18 +295,18 @@ namespace ChitoseV2
 
             public BeatmapSet(IEnumerable<Beatmap> beatmaps)
             {
-                ApproachRate = new Interval(beatmaps.Select(beatmap => beatmap.DiffApproach.Value));
+                ApproachRate = new Interval(beatmaps.Select(beatmap => beatmap.ApproachRate));
                 Artist = beatmaps.First().Artist;
-                Bpm = beatmaps.First().Bpm.Value;
-                CircleSize = new Interval(beatmaps.Select(beatmap => beatmap.DiffSize.Value));
-                Creator = beatmaps.First().Creator;
-                Difficulties = beatmaps.Select(beatmap => beatmap.Version).ToList().AsReadOnly();
-                HealthDrain = new Interval(beatmaps.Select(beatmap => beatmap.DiffDrain.Value));
-                Id = (int)beatmaps.First().BeatmapSetId.Value;
-                Length = beatmaps.First().TotalLength.Value;
-                OverallDifficulty = new Interval(beatmaps.Select(beatmap => beatmap.DiffOverall.Value));
-                Stars = new Interval(beatmaps.Select(beatmap => beatmap.DifficultyRating.Value));
-                Status = beatmaps.First().Approved.ToString();
+                Bpm = beatmaps.First().Bpm;
+                CircleSize = new Interval(beatmaps.Select(beatmap => beatmap.CircleSize));
+                Beatmapper = beatmaps.First().Beatmapper;
+                Difficulties = beatmaps.Select(beatmap => beatmap.Difficulty).ToList().AsReadOnly();
+                HealthDrain = new Interval(beatmaps.Select(beatmap => beatmap.HealthDrain));
+                Id = beatmaps.First().BeatmapSetId;
+                Length = beatmaps.First().TotalLength;
+                OverallDifficulty = new Interval(beatmaps.Select(beatmap => beatmap.OverallDifficulty));
+                Stars = new Interval(beatmaps.Select(beatmap => beatmap.Stars));
+                Status = beatmaps.First().Status.ToString();
                 Title = beatmaps.First().Title;
             }
 
