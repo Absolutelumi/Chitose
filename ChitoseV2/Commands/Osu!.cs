@@ -27,6 +27,7 @@ namespace ChitoseV2
 
         public void AddCommands(DiscordClient client, CommandService commands)
         {
+            /*
             commands.CreateCommand("user").Parameter("user").Do(async (e) =>
             {
                 string username = string.Join(" ", e.Args);
@@ -51,6 +52,12 @@ namespace ChitoseV2
                 {
                     await e.Channel.SendMessage($"User \"{username}\" not found");
                 }
+            });
+            */
+            commands.CreateCommand("scores").Parameter("beatmapid").Do(async (e) =>
+            {
+                Score[] scores = await OsuApi.GetScores.OnBeatmapWithId(e.GetArg("beatmapid")).WithMods(Mods.Nightcore).Results();
+                Console.WriteLine(scores.Length);
             });
 
             commands.CreateCommand("beatmap").Parameter("creator", ParameterType.Unparsed).Do(async (e) =>
@@ -103,9 +110,9 @@ namespace ChitoseV2
                     IEnumerable<Beatmap> potentialBeatmaps = Enumerable.Empty<Beatmap>();
                     foreach (BeatmapResult potentialBeatmapResult in sortedBeatmaps.TakeWhile(result => Extensions.CalculateSimilarity(result.Name, beatmapName) / bestSimilarity > 0.99))
                     {
-                        potentialBeatmaps = potentialBeatmaps.Concat(await OsuApi.BeatmapSet().WithSetId(potentialBeatmapResult.SetId).GetBeatmaps(20));
+                        potentialBeatmaps = potentialBeatmaps.Concat(await OsuApi.GetBeatmapSet.WithSetId(potentialBeatmapResult.SetId).Results(20));
                     }
-                    var selectedBeatmap = potentialBeatmaps.OrderByDescending(beatmap => Extensions.CalculateSimilarity(beatmap.version, difficultyName)).FirstOrDefault();
+                    var selectedBeatmap = potentialBeatmaps.OrderByDescending(beatmap => Extensions.CalculateSimilarity(beatmap.Difficulty, difficultyName)).FirstOrDefault();
                     if (selectedBeatmap == null)
                         throw new BeatmapAnalysisException("Failed to retrieve beatmap");
                     await e.Channel.SendMessage(FormatBeatmapInformation(selectedBeatmap));
@@ -149,7 +156,7 @@ namespace ChitoseV2
                     {
                         await e.Message.Delete();
                     }
-                    Beatmap[] beatmaps = await (isSet ? OsuApi.BeatmapSet().WithSetId(beatmapId).GetBeatmaps() : OsuApi.SpecificBeatmap().WithId(beatmapId).GetBeatmaps(1));
+                    Beatmap[] beatmaps = await (isSet ? OsuApi.GetBeatmapSet.WithSetId(beatmapId).Results() : OsuApi.GetSpecificBeatmap.WithId(beatmapId).Results(1));
                     await e.Channel.SendMessage(isSet ? FormatBeatmapSetInformation(new BeatmapSet(beatmaps)) : FormatBeatmapInformation(beatmaps.First()));
                 }
 
