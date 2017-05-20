@@ -27,33 +27,22 @@ namespace ChitoseV2
 
         public void AddCommands(DiscordClient client, CommandService commands)
         {
-            /*
             commands.CreateCommand("user").Parameter("user").Do(async (e) =>
             {
                 string username = string.Join(" ", e.Args);
-                var user = await OsuApi.User().WithUser(username).GetUser();
-                ReadOnlyCollection<Scores> bestScores = await OsuApi.GetUserBestAsync(user.UserID);
-                Beatmap bestScore = bestScores.FirstOrDefault();
-                var bestPlayBeatmapPossibilities = await OsuApi.SpecificBeatmap().WithId(bestScore.BeatmapId).GetBeatmaps(20);
-                Beatmap bestPlay = bestPlayBeatmapPossibilities.First(); 
-                var userInformation = new StringBuilder()
-                    .AppendLine($"**{user.Username}**")
-                    .AppendLine($"User Best: **{bestPlay.Title} [{bestPlay.version}]** giving __**{bestScore.PP}pp**__")
-                    .AppendLine("```")
-                    .AppendLine($"Rank: {user.Rank}")
-                    .AppendLine($"Performance Points: {user.RawPP}")
-                    .AppendLine($"Country: {user.Country}")
-                    .AppendLine($"Country Rank: {user.CountryRank}")
-                    .AppendLine($"Level: {user.Level}")
-                    .AppendLine("```")
-                    .ToString();
+                OsuApi.Model.User user = await OsuApi.GetUser.WithUser(username).Result();
+                Score[] bestScores = await OsuApi.GetBestPlay.WithId(username).Result(10);
+                Score bestScore = bestScores.First(); 
+                var beatmaps = await OsuApi.GetSpecificBeatmap.WithId(bestScore.BeatmapId).Results();
+                Beatmap beatmap = beatmaps.First(); 
+                string userInformation = FormatUserInformation(user, bestScore, beatmap);
                 await e.Channel.SendMessage(userInformation);
                 if (user == null)
                 {
                     await e.Channel.SendMessage($"User \"{username}\" not found");
                 }
             });
-            */
+
             commands.CreateCommand("scores").Parameter("beatmapid").Do(async (e) =>
             {
                 Score[] scores = await OsuApi.GetScores.OnBeatmapWithId(e.GetArg("beatmapid")).WithMods(Mods.Nightcore).Results();
@@ -123,30 +112,22 @@ namespace ChitoseV2
                 }
             });
 
-            //commands.CreateCommand("leaderboards").Parameter("beatmap").Do(async (e) =>
-            //{
-            //    if (BeatmapUrlMatcher.IsMatch(e.Message.Text) && e.Message.User.IsBot == false)
-            //    {
-            //        var match = BeatmapUrlMatcher.Match(e.Message.Text);
-            //        string link = match.Groups["beatmap_link"].Value;
-            //        bool isSet = match.Groups["b_s"].Value == "s";
-            //        bool first = false; 
-            //        long? beatmapId = long.Parse(match.Groups["beatmap_id"].Value);
-            //        if (match.Groups["full_link"].Value == e.Message.Text)
-            //        {
-            //            await e.Message.Delete();
-            //        }
-            //        ReadOnlyCollection<Beatmap> beatmaps = await (isSet ? OsuApi.GetBeatmapsAsync(s: beatmapId, limit: 20) : OsuApi.GetBeatmapsAsync(b: beatmapId, limit: 1));
-            //        ReadOnlyCollection<Scores> scores = await OsuApi.GetScoresAsync(b: (long)beatmaps.First().BeatmapId, m: Mods.None, limit: 50);
+            commands.CreateCommand("leaderboard").Parameter("beatmap").Do(async (e) =>
+            {
+                var match = BeatmapUrlMatcher.Match(e.Message.Text);
+                string link = match.Groups["beatmap_link"].Value;
+                bool isSet = match.Groups["b_s"].Value == "s";
+                string beatmapId = match.Groups["beatmap_id"].Value;
+                var beatmaps = await (isSet ? OsuApi.GetBeatmapSet.WithSetId(beatmapId).Results(20) : OsuApi.GetSpecificBeatmap.WithId(beatmapId).Results(20));
+                Beatmap beatmap = beatmaps.First();
+                Score[] scores = await OsuApi.GetScores.OnBeatmapWithId(beatmap.BeatmapId).Results(25);
 
-            //        await e.Channel.SendMessage(FormatLeaderboardInformation(scores)); 
-            //    }
-            //});
+                await e.Channel.SendMessage(FormatLeaderboardInformation(scores, beatmap));
+            });
 
             client.MessageReceived += async (s, e) =>
             {
-                //Beatmap Info
-                if (BeatmapUrlMatcher.IsMatch(e.Message.Text) && e.Message.User.IsBot == false)
+                if (BeatmapUrlMatcher.IsMatch(e.Message.Text) && e.Message.User.IsBot == false && e.Message.Text[0] != '!')
                 {
                     var match = BeatmapUrlMatcher.Match(e.Message.Text);
                     string link = match.Groups["beatmap_link"].Value;
@@ -168,7 +149,7 @@ namespace ChitoseV2
                 {
                     lastAttachment = e.Message.Embeds[0].Url;
                 }
-            };
+            }; //Beatmap Info
         }
 
         private static List<BeatmapResult> GetBeatmapsByMapper(string beatmapper)
@@ -231,10 +212,35 @@ namespace ChitoseV2
                 .ToString();
         }
 
-        //private string FormatLeaderboardInformation(ReadOnlyCollection<Scores> scores)
-        //{
-        //    return "";
-        //}
+        private string FormatLeaderboardInformation(Score[] scores, Beatmap beatmap)
+        {
+            StringBuilder leaderboard = new StringBuilder();
+            int rank = 1; 
+            leaderboard.AppendLine($"__***{CleanDiscordString(beatmap.Title)} [{CleanDiscordString(beatmap.Difficulty)}]***__  by ***{CleanDiscordString(beatmap.Artist)}***");
+            leaderboard.AppendLine($"```"); 
+            foreach(Score score in scores)
+            {
+                leaderboard.AppendLine($"#{rank}  {score.Username}:  Score {score.TotalScore} - {score.PP}pp - Max Combo {score.Combo} | Mods: {score.Mods}");
+                rank++;
+            }
+            leaderboard.AppendLine($"```");
+            return leaderboard.ToString(); 
+        }
+
+        private string FormatUserInformation(OsuApi.Model.User user, Score bestPlay, Beatmap beatmap)
+        {
+            var userInformation = new StringBuilder()
+                    .AppendLine($"**{user.Username}**")
+                    .AppendLine($"User Best: **{beatmap.Title} [{beatmap.Difficulty}]** giving __**{bestPlay.PP}pp**__")
+                    .AppendLine("```")
+                    .AppendLine($"Rank: {user.Rank}")
+                    .AppendLine($"Performance Points: {user.PP}")
+                    .AppendLine($"Country: {user.Country}")
+                    .AppendLine($"Country Rank: {user.CountryRank}")
+                    .AppendLine($"Level: {user.Level}")
+                    .AppendLine("```");
+            return userInformation.ToString(); 
+        }
 
         private string ToMinutes(int? seconds) => TimeSpan.FromSeconds(seconds.Value).ToString(@"m\:ss");
 

@@ -197,6 +197,7 @@
   <ItemGroup>
     <Compile Include="Chitose.cs" />
     <Compile Include="Commands\ChitosePictureResponse.cs" />
+    <Compile Include="Commands\OsuScoreUpload.cs" />
     <Compile Include="Framework\CommandSet.cs" />
     <Compile Include="API-Request\DanbooruService.cs" />
     <Compile Include="Commands\Help.cs" />
@@ -241,7 +242,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Osu-Sharp\OsuApi\OsuApi.csproj">
+    <ProjectReference Include="..\..\OsuSharp\OsuApi\OsuApi.csproj">
       <Project>{426b006f-2c0c-4f3c-8698-ce60d4b4b1d9}</Project>
       <Name>OsuApi</Name>
     </ProjectReference>
@@ -249,6 +250,9 @@
       <Project>{a368cb75-75f0-4489-904d-b5cebb0fe624}</Project>
       <Name>RedditSharp</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="OsuApi.csproj" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets" Condition="Exists('..\packages\Microsoft.Bcl.Build.1.0.21\build\Microsoft.Bcl.Build.targets')" />

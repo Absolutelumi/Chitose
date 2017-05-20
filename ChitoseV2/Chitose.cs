@@ -46,6 +46,7 @@ namespace ChitoseV2
                 input.LogLevel = LogSeverity.Info;
                 input.LogHandler = (_, e) => Console.WriteLine(e.Message);
             });
+
             client.UsingCommands(input =>
             {
                 input.PrefixChar = prefix;

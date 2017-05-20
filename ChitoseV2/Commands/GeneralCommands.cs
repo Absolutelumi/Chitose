@@ -49,7 +49,7 @@ namespace ChitoseV2
             {
                 commands.CreateCommand("purge").Do(async (e) =>
                 {
-                    Message[] chanMessages = e.Channel.Messages.Take(50).ToArray();
+                    Message[] chanMessages = e.Channel.Messages.Take(20).ToArray();
 
                     await e.Channel.DeleteMessages(chanMessages);
 
