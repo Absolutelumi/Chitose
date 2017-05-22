@@ -19,7 +19,7 @@ namespace ChitoseV2
 
         private static readonly YouTubeService youtubeService = new YouTubeService(new BaseClientService.Initializer()
         {
-            HttpClientInitializer = Chitose.GoogleServiceAccount
+            ApiKey = Chitose.GoogleApiKey
         });
 
         private readonly AudioService service;
@@ -133,14 +133,25 @@ namespace ChitoseV2
         public bool PlayNext()
         {
             Paused = false;
-            if (queue.Count == 0)
+            bool success = false;
+            while (!success)
             {
-                OnSongChanged(null);
-                return false;
+                if (queue.Count == 0)
+                {
+                    OnSongChanged(null);
+                    return false;
+                }
+                try
+                {
+                    AcquireAndPlay(queue[0]);
+                    OnSongChanged(queue[0].Title);
+                    success = true;
+                }
+                catch
+                {
+                }
+                queue.RemoveAt(0);
             }
-            AcquireAndPlay(queue[0]);
-            OnSongChanged(queue[0].Title);
-            queue.RemoveAt(0);
             return true;
         }
 
@@ -233,8 +244,15 @@ namespace ChitoseV2
             searchRequest.Order = SearchResource.ListRequest.OrderEnum.Relevance;
             searchRequest.Q = string.Join("+", searchTerms);
             searchRequest.MaxResults = 25;
-            var response = await searchRequest.ExecuteAsync();
-            return response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
+            try
+            {
+                var response = await searchRequest.ExecuteAsync();
+                return response.Items.FirstOrDefault(x => x.Id.Kind == "youtube#video");
+            } catch(Exception e)
+            {
+
+            }
+            return null;
         }
 
         private void PlayFile(string filePath)

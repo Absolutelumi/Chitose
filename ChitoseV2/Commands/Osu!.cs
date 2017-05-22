@@ -1,6 +1,8 @@
 ﻿using Discord;
 using Discord.Commands;
 using Google.Cloud.Vision.V1;
+using OsuApi;
+using OsuApi.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,18 +11,18 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using Sd = System.Drawing;
-using OsuApi;
-using OsuApi.Model;
 
 namespace ChitoseV2
 {
     internal class Osu_ : ICommandSet
     {
-        private static readonly Regex BeatmapUrlMatcher = new Regex(@"(?<full_link>(?<beatmap_link>(https:\/\/)?osu.ppy.sh\/(?<b_s>[bs])\/(?<beatmap_id>\d+))\S*)");
         private static readonly ImageAnnotatorClient ImageAnnotatorClient = ImageAnnotatorClient.Create();
         private static readonly JavaScriptSerializer json = new JavaScriptSerializer();
+        private static readonly Regex NewBeatmapUrlMatcher = new Regex(@"(?<full_link>(https:\/\/)?osu.ppy.sh\/beatmapsets\/(?<beatmap_set_id>\d+)(#osu\/(?<beatmap_id>\d+))?\S*)");
+        private static readonly Regex OldBeatmapUrlMatcher = new Regex(@"(?<full_link>(https:\/\/)?osu.ppy.sh\/(?<b_s>[bs])\/(?<beatmap_id>\d+)\S*)");
         private static readonly Api OsuApi = new Api(Chitose.APIKey);
         private string lastAttachment;
         private string beatmap { get; set; }
@@ -32,9 +34,9 @@ namespace ChitoseV2
                 string username = string.Join(" ", e.Args);
                 OsuApi.Model.User user = await OsuApi.GetUser.WithUser(username).Result();
                 Score[] bestScores = await OsuApi.GetBestPlay.WithId(username).Result(10);
-                Score bestScore = bestScores.First(); 
+                Score bestScore = bestScores.First();
                 var beatmaps = await OsuApi.GetSpecificBeatmap.WithId(bestScore.BeatmapId).Results();
-                Beatmap beatmap = beatmaps.First(); 
+                Beatmap beatmap = beatmaps.First();
                 string userInformation = FormatUserInformation(user, bestScore, beatmap);
                 await e.Channel.SendMessage(userInformation);
                 if (user == null)
@@ -76,9 +78,9 @@ namespace ChitoseV2
                     string beatmapNameAndDifficulty = beatmapInformation[0];
                     int locationOfBy = beatmapInformation[1].IndexOf("by");
                     string beatmapper = (e.GetArg("creator") != string.Empty) ? e.GetArg("creator") : beatmapInformation[1].Substring(locationOfBy + 3);
-                    IEnumerable<BeatmapResult> sortedBeatmaps = GetBeatmapsByMapper(beatmapper)
+                    IEnumerable<BeatmapSetResult> sortedBeatmaps = GetBeatmapsByMapper(beatmapper)
                         .OrderByDescending(result => Extensions.CalculateSimilarity(result.Name, beatmapNameAndDifficulty));
-                    BeatmapResult beatmapResult = sortedBeatmaps.FirstOrDefault();
+                    BeatmapSetResult beatmapResult = sortedBeatmaps.FirstOrDefault();
                     if (beatmapResult == null)
                         throw new BeatmapAnalysisException("Failed to detect creator. Try the command again by specifying the creator.");
 
@@ -97,13 +99,14 @@ namespace ChitoseV2
                     var difficultyName = beatmapNameAndDifficulty.Substring(splitIndex);
 
                     IEnumerable<Beatmap> potentialBeatmaps = Enumerable.Empty<Beatmap>();
-                    foreach (BeatmapResult potentialBeatmapResult in sortedBeatmaps.TakeWhile(result => Extensions.CalculateSimilarity(result.Name, beatmapName) / bestSimilarity > 0.99))
+                    foreach (BeatmapSetResult potentialBeatmapResult in sortedBeatmaps.TakeWhile(result => Extensions.CalculateSimilarity(result.Name, beatmapName) / bestSimilarity > 0.99))
                     {
                         potentialBeatmaps = potentialBeatmaps.Concat(await OsuApi.GetBeatmapSet.WithSetId(potentialBeatmapResult.SetId).Results(20));
                     }
                     var selectedBeatmap = potentialBeatmaps.OrderByDescending(beatmap => Extensions.CalculateSimilarity(beatmap.Difficulty, difficultyName)).FirstOrDefault();
                     if (selectedBeatmap == null)
                         throw new BeatmapAnalysisException("Failed to retrieve beatmap");
+                    await e.Channel.SendFile(new Uri($"https://assets.ppy.sh/beatmaps/{selectedBeatmap.BeatmapSetId}/covers/cover.jpg"));
                     await e.Channel.SendMessage(FormatBeatmapInformation(selectedBeatmap));
                 }
                 catch (BeatmapAnalysisException exception)
@@ -114,31 +117,43 @@ namespace ChitoseV2
 
             commands.CreateCommand("leaderboard").Parameter("beatmap").Do(async (e) =>
             {
-                var match = BeatmapUrlMatcher.Match(e.Message.Text);
-                string link = match.Groups["beatmap_link"].Value;
-                bool isSet = match.Groups["b_s"].Value == "s";
-                string beatmapId = match.Groups["beatmap_id"].Value;
-                var beatmaps = await (isSet ? OsuApi.GetBeatmapSet.WithSetId(beatmapId).Results(20) : OsuApi.GetSpecificBeatmap.WithId(beatmapId).Results(20));
-                Beatmap beatmap = beatmaps.First();
-                Score[] scores = await OsuApi.GetScores.OnBeatmapWithId(beatmap.BeatmapId).Results(25);
+                try
+                {
+                    BeatmapResult result = ExtractBeatmapFromText(e.GetArg("beatmap"));
+                    if (result == null)
+                        throw new Exception("Invalid beatmap URL");
+                    var beatmaps = await (result.IsSet ? OsuApi.GetBeatmapSet.WithSetId(result.Id).Results(20) : OsuApi.GetSpecificBeatmap.WithId(result.Id).Results(20));
+                    Beatmap beatmap = beatmaps.FirstOrDefault();
+                    if (beatmap == null)
+                        throw new Exception("Unable to access beatmap URL");
 
-                await e.Channel.SendMessage(FormatLeaderboardInformation(scores, beatmap));
+                    Score[] scores = await OsuApi.GetScores.OnBeatmapWithId(beatmap.BeatmapId).Results(25);
+                    await e.Channel.SendMessage(FormatLeaderboardInformation(scores, beatmap));
+                }
+                catch (Exception exception)
+                {
+                    await e.Channel.SendMessage(exception.Message);
+                }
             });
 
             client.MessageReceived += async (s, e) =>
             {
-                if (BeatmapUrlMatcher.IsMatch(e.Message.Text) && e.Message.User.IsBot == false && e.Message.Text[0] != '!')
+                if (e.Message.User.IsBot == false && e.Message.Text[0] != '!')
                 {
-                    var match = BeatmapUrlMatcher.Match(e.Message.Text);
-                    string link = match.Groups["beatmap_link"].Value;
-                    bool isSet = match.Groups["b_s"].Value == "s";
-                    string beatmapId = match.Groups["beatmap_id"].Value;
-                    if (match.Groups["full_link"].Value == e.Message.Text)
+                    foreach (BeatmapResult result in ExtractBeatmapsFromText(e.Message.Text))
                     {
-                        await e.Message.Delete();
+                        if (result.FullLink == e.Message.Text)
+                        {
+                            await e.Message.Delete();
+                        }
+                        Beatmap[] beatmaps = await (result.IsSet ? OsuApi.GetBeatmapSet.WithSetId(result.Id).Results() : OsuApi.GetSpecificBeatmap.WithId(result.Id).Results(1));
+                        if (beatmaps.Length > 0)
+                        {
+                            await e.Channel.SendFile(new Uri($"https://assets.ppy.sh/beatmaps/{beatmaps[0].BeatmapSetId}/covers/cover.jpg"));
+                            await e.Channel.SendMessage(result.IsSet ? FormatBeatmapSetInformation(new BeatmapSet(beatmaps)) : FormatBeatmapInformation(beatmaps.First()));
+                        }
+                        await Task.Delay(1000);
                     }
-                    Beatmap[] beatmaps = await (isSet ? OsuApi.GetBeatmapSet.WithSetId(beatmapId).Results() : OsuApi.GetSpecificBeatmap.WithId(beatmapId).Results(1));
-                    await e.Channel.SendMessage(isSet ? FormatBeatmapSetInformation(new BeatmapSet(beatmaps)) : FormatBeatmapInformation(beatmaps.First()));
                 }
 
                 if (e.Message.Attachments.Length == 1)
@@ -152,21 +167,21 @@ namespace ChitoseV2
             }; //Beatmap Info
         }
 
-        private static List<BeatmapResult> GetBeatmapsByMapper(string beatmapper)
+        private static List<BeatmapSetResult> GetBeatmapsByMapper(string beatmapper)
         {
             var beatmapQueryUrl = $"http://osusearch.com/query/?mapper={beatmapper.UrlEncode()}";
             var beatmapQueryRequest = WebRequest.CreateHttp(beatmapQueryUrl);
             string queryResponse = beatmapQueryRequest.GetResponse().GetResponseStream().ReadString();
             var searchResult = json.Deserialize<BeatmapSearchResult>(queryResponse);
             int resultCount = searchResult.result_count;
-            List<BeatmapResult> beatmapResults = searchResult.beatmaps.Select(result => new BeatmapResult(result)).ToList();
+            List<BeatmapSetResult> beatmapResults = searchResult.beatmaps.Select(result => new BeatmapSetResult(result)).ToList();
             int queryAttempts = 1;
             while (beatmapResults.Count < resultCount)
             {
                 var additionalQueryRequest = WebRequest.CreateHttp($"{beatmapQueryUrl}&offset={queryAttempts++}");
                 queryResponse = additionalQueryRequest.GetResponse().GetResponseStream().ReadString();
                 searchResult = json.Deserialize<BeatmapSearchResult>(queryResponse);
-                beatmapResults.AddRange(searchResult.beatmaps.Select(result => new BeatmapResult(result)));
+                beatmapResults.AddRange(searchResult.beatmaps.Select(result => new BeatmapSetResult(result)));
             }
             return beatmapResults;
         }
@@ -184,12 +199,75 @@ namespace ChitoseV2
 
         private string CleanDiscordString(string text) => Regex.Replace(text, @"\*", @" ");
 
+        private BeatmapResult ExtractBeatmapFromText(string text)
+        {
+            return ExtractBeatmapsFromText(text).FirstOrDefault();
+        }
+
+        private IEnumerable<BeatmapResult> ExtractBeatmapsFromText(string text)
+        {
+            var oldBeatmaps = ExtractOldBeatmapsFromText(text);
+            var newBeatmaps = ExtractNewBeatmapsFromText(text);
+            var sortedBeatmaps = oldBeatmaps.Concat(newBeatmaps).OrderBy(beatmap => beatmap.Key).Select(beatmap => beatmap.Value);
+            var sentBeatmaps = new HashSet<BeatmapResult>();
+            foreach (BeatmapResult result in sortedBeatmaps)
+            {
+                if (!sentBeatmaps.Contains(result))
+                {
+                    sentBeatmaps.Add(result);
+                    yield return result;
+                }
+            }
+        }
+
+        private IEnumerable<KeyValuePair<int, BeatmapResult>> ExtractNewBeatmapsFromText(string text)
+        {
+            var match = NewBeatmapUrlMatcher.Match(text);
+            while (match.Success)
+            {
+                bool isSet = !match.Groups["beatmap_id"].Success;
+                string beatmapId = match.Groups[isSet ? "beatmap_set_id" : "beatmap_id"].Value;
+                yield return new KeyValuePair<int, BeatmapResult>
+                (
+                    match.Index,
+                    new BeatmapResult
+                    {
+                        FullLink = match.Value,
+                        IsSet = isSet,
+                        Id = beatmapId
+                    }
+                );
+                match = match.NextMatch();
+            }
+        }
+
+        private IEnumerable<KeyValuePair<int, BeatmapResult>> ExtractOldBeatmapsFromText(string text)
+        {
+            var match = OldBeatmapUrlMatcher.Match(text);
+            while (match.Success)
+            {
+                bool isSet = match.Groups["b_s"].Value == "s";
+                string beatmapId = match.Groups["beatmap_id"].Value;
+                yield return new KeyValuePair<int, BeatmapResult>
+                (
+                    match.Index,
+                    new BeatmapResult
+                    {
+                        FullLink = match.Value,
+                        IsSet = isSet,
+                        Id = beatmapId
+                    }
+                );
+                match = match.NextMatch();
+            }
+        }
+
         private string FormatBeatmapInformation(Beatmap beatmap)
         {
             return new StringBuilder()
                 .AppendLine($"__***{CleanDiscordString(beatmap.Title)} [{CleanDiscordString(beatmap.Difficulty)}]***__  by ***{CleanDiscordString(beatmap.Artist)}***")
                 .AppendLine($"**Created by *{beatmap.Beatmapper}***  |  **Status : *{beatmap.Status}***")
-                .AppendLine($"***Download Link*** : **https://osu.ppy.sh/b/{beatmap.BeatmapId}**")
+                .AppendLine($"***Download Link*** : **https://osu.ppy.sh/beatmapsets/{beatmap.BeatmapSetId}#osu/{beatmap.BeatmapId}**")
                 .AppendLine("**Beatmap Info**")
                 .AppendLine("```")
                 .Append($"AR {beatmap.ApproachRate} | OD {beatmap.OverallDifficulty} | CS {beatmap.CircleSize} | HP {beatmap.HealthDrain} | ")
@@ -203,7 +281,7 @@ namespace ChitoseV2
             return new StringBuilder()
                 .AppendLine($"__***{CleanDiscordString(beatmapSet.Title)}***__  by ***{CleanDiscordString(beatmapSet.Artist)}***")
                 .AppendLine($"**Created by *{beatmapSet.Beatmapper}***  |  **Status : *{beatmapSet.Status}***")
-                .AppendLine($"***Download Link*** : **https://osu.ppy.sh/s/{beatmapSet.Id}**")
+                .AppendLine($"***Download Link*** : **https://osu.ppy.sh/beatmapsets/{beatmapSet.Id}**")
                 .AppendLine("**Beatmap Info**")
                 .AppendLine("```")
                 .Append($"AR {beatmapSet.ApproachRate} | OD {beatmapSet.OverallDifficulty} | CS {beatmapSet.CircleSize} | HP {beatmapSet.HealthDrain} | ")
@@ -215,16 +293,16 @@ namespace ChitoseV2
         private string FormatLeaderboardInformation(Score[] scores, Beatmap beatmap)
         {
             StringBuilder leaderboard = new StringBuilder();
-            int rank = 1; 
+            int rank = 1;
             leaderboard.AppendLine($"__***{CleanDiscordString(beatmap.Title)} [{CleanDiscordString(beatmap.Difficulty)}]***__  by ***{CleanDiscordString(beatmap.Artist)}***");
-            leaderboard.AppendLine($"```"); 
-            foreach(Score score in scores)
+            leaderboard.AppendLine($"```");
+            foreach (Score score in scores)
             {
                 leaderboard.AppendLine($"#{rank}  {score.Username}:  Score {score.TotalScore} - {score.PP}pp - Max Combo {score.Combo} | Mods: {score.Mods}");
                 rank++;
             }
             leaderboard.AppendLine($"```");
-            return leaderboard.ToString(); 
+            return leaderboard.ToString();
         }
 
         private string FormatUserInformation(OsuApi.Model.User user, Score bestPlay, Beatmap beatmap)
@@ -239,7 +317,7 @@ namespace ChitoseV2
                     .AppendLine($"Country Rank: {user.CountryRank}")
                     .AppendLine($"Level: {user.Level}")
                     .AppendLine("```");
-            return userInformation.ToString(); 
+            return userInformation.ToString();
         }
 
         private string ToMinutes(int? seconds) => TimeSpan.FromSeconds(seconds.Value).ToString(@"m\:ss");
@@ -261,17 +339,20 @@ namespace ChitoseV2
 
         private class BeatmapResult
         {
-            public string Name { get; private set; }
-            public string SetId { get; private set; }
+            public string FullLink;
+            public string Id;
+            public bool IsSet;
 
-            public BeatmapResult(BeatmapSearchResult.Beatmap beatmap)
+            public override bool Equals(object obj)
             {
-                Name = beatmap.artist + " - " + beatmap.title;
-                SetId = beatmap.beatmapset_id;
+                return GetHashCode() == obj.GetHashCode();
+            }
+
+            public override int GetHashCode()
+            {
+                return $"{Id}:{IsSet}".GetHashCode();
             }
         }
-
-#pragma warning disable 0649
 
         private class BeatmapSearchResult
         {
@@ -286,15 +367,13 @@ namespace ChitoseV2
             }
         }
 
-#pragma warning restore 0649
-
         private class BeatmapSet
         {
             public Interval ApproachRate { get; private set; }
             public string Artist { get; private set; }
+            public string Beatmapper { get; private set; }
             public double Bpm { get; private set; }
             public Interval CircleSize { get; private set; }
-            public string Beatmapper { get; private set; }
             public ReadOnlyCollection<string> Difficulties { get; private set; }
             public Interval HealthDrain { get; private set; }
             public string Id { get; private set; }
@@ -342,6 +421,21 @@ namespace ChitoseV2
                 public override string ToString() => maximum == minimum ? $"{maximum}" : $"{minimum}-{maximum}";
             }
         }
+
+        private class BeatmapSetResult
+        {
+            public string Name { get; private set; }
+            public string SetId { get; private set; }
+
+            public BeatmapSetResult(BeatmapSearchResult.Beatmap beatmap)
+            {
+                Name = beatmap.artist + " - " + beatmap.title;
+                SetId = beatmap.beatmapset_id;
+            }
+        }
+
+#pragma warning disable 0649
+#pragma warning restore 0649
 
         private class Difficulty
         {

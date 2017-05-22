@@ -14,6 +14,7 @@ namespace ChitoseV2
 {
     internal class Chitose
     {
+        public static readonly string GoogleApiKey = Properties.Settings.Default.GoogleApiKey;
         public static readonly string APIKey = Properties.Settings.Default.APIKey;
         public static readonly string ConfigDirectory = Properties.Settings.Default.ConfigDirectory;
         public static readonly string FfmpegPath = Properties.Settings.Default.FfmpegPath;

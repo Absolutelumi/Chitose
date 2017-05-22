@@ -88,7 +88,13 @@ namespace ChitoseV2
             HttpWebRequest getRequest = WebRequest.CreateHttp(uri);
             getRequest.Method = "GET";
             WebResponse response = getRequest.GetResponse();
-            return response.GetResponseStream();
+            using (var responseStream = response.GetResponseStream())
+            {
+                var outputStream = new MemoryStream();
+                responseStream.CopyTo(outputStream);
+                outputStream.Position = 0;
+                return outputStream;
+            }
         }
 
         public static string HtmlDecode(this string text)
@@ -118,7 +124,10 @@ namespace ChitoseV2
 
         public static async Task SendFile(this Channel channel, Uri url)
         {
-            await channel.SendFile(Path.GetFileName(url.LocalPath), GetHttpStream(url));
+            using (var httpStream = GetHttpStream(url))
+            {
+                await channel.SendFile(Path.GetFileName(url.LocalPath), httpStream);
+            }
         }
 
         public static bool StartsWithVowelSound(this int number)
