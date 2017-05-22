@@ -106,7 +106,6 @@ namespace ChitoseV2
                     var selectedBeatmap = potentialBeatmaps.OrderByDescending(beatmap => Extensions.CalculateSimilarity(beatmap.Difficulty, difficultyName)).FirstOrDefault();
                     if (selectedBeatmap == null)
                         throw new BeatmapAnalysisException("Failed to retrieve beatmap");
-                    await e.Channel.SendFile(new Uri($"https://assets.ppy.sh/beatmaps/{selectedBeatmap.BeatmapSetId}/covers/cover.jpg"));
                     await e.Channel.SendMessage(FormatBeatmapInformation(selectedBeatmap));
                 }
                 catch (BeatmapAnalysisException exception)
