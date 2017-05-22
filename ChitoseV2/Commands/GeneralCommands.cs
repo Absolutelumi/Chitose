@@ -134,6 +134,11 @@ namespace ChitoseV2
             //        await e.Channel.SendMessage(string.Format("{0}'s message means \"{1}\"", e.User.Name, response.TranslatedText));
             //    }
             //};
+
+            commands.CreateCommand("help").Do(async (e) =>
+            {
+                await e.Channel.SendMessage("The command is !helpme you insolent fuck"); 
+            });
         }
     }
 }
