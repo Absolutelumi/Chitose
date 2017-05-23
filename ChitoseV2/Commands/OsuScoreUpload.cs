@@ -50,28 +50,6 @@ namespace ChitoseV2.Commands
             });
         }
 
-        private void UpdateLatestUpdate(string user, DateTime time)
-        {
-            LatestUpdate[user] = time;
-            File.WriteAllLines(OsuScorePath, LatestUpdate.Select(update => $"{update.Key},{update.Value}"));
-        }
-
-        private void GetUsers()
-        {
-            foreach(var data in File.ReadAllLines(OsuScorePath))
-            {
-                var splitData = data.Split(',');
-                LatestUpdate[splitData[0]] = DateTime.Parse(splitData[1]);
-            }
-        }
-
-        private double CalculateAccuracy(Score score)
-        {
-            int totalPossibleScore = 300 * (score.NumberOf300s + score.NumberOf100s + score.NumberOf50s + score.NumberOfMisses);
-            int acquiredScore = 300 * score.NumberOf300s + 100 * score.NumberOf100s + 50 * score.NumberOf50s;
-            return (double)acquiredScore / totalPossibleScore;
-        }
-
         private string FormatScoreImage(Score score)
         {
             Bitmap ScoreImage = new Bitmap(BaseImagePath);
@@ -84,10 +62,19 @@ namespace ChitoseV2.Commands
         private string FormatUserScore(string user, Score score, Beatmap beatmap)
         {
             return new StringBuilder()
-                .AppendLine($"{user} just got a {CalculateAccuracy(score):P2} on {beatmap.Title} [{beatmap.Difficulty}]")
+                .AppendLine($"{user} just got a {score.Accuracy:P2} on {beatmap.Title} [{beatmap.Difficulty}]")
                 .AppendLine($"with {score.Combo} combo and {score.Mods}")
                 .AppendLine($"*300s:* {score.NumberOf300s}  *100s:* {score.NumberOf100s}  *50s:* {score.NumberOf50s}  *Misses:* {score.NumberOfMisses}")
                 .ToString();
+        }
+
+        private void GetUsers()
+        {
+            foreach (var data in File.ReadAllLines(OsuScorePath))
+            {
+                var splitData = data.Split(',');
+                LatestUpdate[splitData[0]] = DateTime.Parse(splitData[1]);
+            }
         }
 
         private bool IsNewScore(Score score) => score.Date.CompareTo(LatestUpdate[score.Username]) > 0;
@@ -111,6 +98,12 @@ namespace ChitoseV2.Commands
                     }
                 }
             }
+        }
+
+        private void UpdateLatestUpdate(string user, DateTime time)
+        {
+            LatestUpdate[user] = time;
+            File.WriteAllLines(OsuScorePath, LatestUpdate.Select(update => $"{update.Key},{update.Value}"));
         }
     }
 }
