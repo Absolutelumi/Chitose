@@ -90,7 +90,7 @@ namespace ChitoseV2.Commands
                 .ToString();
         }
 
-        private bool IsNewScore(Score score) => !LatestUpdate.ContainsKey(score.Username) || score.Date.CompareTo(LatestUpdate[score.Username]) > 0;
+        private bool IsNewScore(Score score) => score.Date.CompareTo(LatestUpdate[score.Username]) > 0;
 
         private async void SendUserRecentScore()
         {
