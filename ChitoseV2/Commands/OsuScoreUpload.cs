@@ -62,7 +62,7 @@ namespace ChitoseV2.Commands
         private string FormatUserScore(string user, Score score, Beatmap beatmap)
         {
             return new StringBuilder()
-                .AppendLine($"{user} just got a {score.Accuracy:P2} on {beatmap.Title} [{beatmap.Difficulty}]")
+                .AppendLine($"{user} just {(score.Rank == Rank.F ? "failed with" : "got")} a {score.Accuracy:P2} on {beatmap.Title} [{beatmap.Difficulty}]")
                 .AppendLine($"with {score.Combo} combo and {score.Mods}")
                 .AppendLine($"*300s:* {score.NumberOf300s}  *100s:* {score.NumberOf100s}  *50s:* {score.NumberOf50s}  *Misses:* {score.NumberOfMisses}")
                 .ToString();
