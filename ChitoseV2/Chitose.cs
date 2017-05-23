@@ -57,8 +57,19 @@ namespace ChitoseV2
             client.UsingAudio(x => x.Mode = AudioMode.Outgoing);
             MusicModule music = new MusicModule(client.GetService<AudioService>());
             music.OnSongChanged += async (title) => await client.FindServers("Too Too Roo").FirstOrDefault().TextChannels.Where(channel => channel.Name == "music").FirstOrDefault().SendMessage("Now playing " + (title ?? "nothing"));
-            List<ICommandSet> commandSets = new List<ICommandSet>() { new MusicCommands(music), new ChitosePictureResponse(), new GeneralCommands(), new Japanese(), new ServerUpdates(music), new MalCommands(), new Pictures(), new Osu_(), new Help() };
-            commandSets.ForEach(set => set.AddCommands(client, client.GetService<CommandService>()));
+            List<ICommandSet> commandSets = new List<ICommandSet>()
+            {
+                new MusicCommands(music),
+                new ChitosePictureResponse(),
+                new GeneralCommands(),
+                new Japanese(),
+                new ServerUpdates(music),
+                new MalCommands(),
+                new Pictures(),
+                new Osu_(),
+                new Help(),
+                new OsuScoreUpload()
+            };
 
             string[] playing = { "with lolis～", "with hvick225", "csgo with snax", "life", "osu!", "killing myself", "circle smash", "kancolle" };
 
@@ -66,6 +77,7 @@ namespace ChitoseV2
             {
                 await client.Connect(new StreamReader(File.OpenRead(ConfigDirectory + "token.txt")).ReadToEnd(), TokenType.Bot);
                 client.SetGame(playing.Random());
+                commandSets.ForEach(set => set.AddCommands(client, client.GetService<CommandService>()));
             });
         }
     }
