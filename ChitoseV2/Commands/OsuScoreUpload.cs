@@ -41,13 +41,43 @@ namespace ChitoseV2.Commands
                     var osuChannel = client.FindServers("Too Too Roo").First().FindChannels("osu-scores").First();
                     if (!LatestUpdate.ContainsKey(user.Username))
                     {
-                        UpdateLatestUpdate(user.Username, new DateTime(0));
+                        SaveUserData()
                     }
                     await e.Channel.SendMessage($"{user.Username} has been added! Any ranked score {user.Username} makes will show up in {osuChannel.Mention}!");
                 }
                 else
                     await e.Channel.SendMessage("User not found!");
             });
+
+            commands.CreateCommand("Unfollow").Parameter("User", ParameterType.Unparsed).Do(async (e) =>
+            {
+                OsuApi.Model.User user = await OsuApi.GetUser.WithUser(string.Join(" ", e.Args)).Result();
+                if (LatestUpdate.ContainsKey(user.Username))
+                {
+                    
+
+                    await e.Channel.SendMessage($"{user.Username} has been removed!"); 
+                }
+                else
+                    await e.Channel.SendMessage("User not on record.");
+            }); 
+        }
+
+        public void SaveUserData()
+        {
+            void AddUsers(OsuApi.Model.User user)
+            {
+                UpdateLatestUpdate(user.Username, new DateTime(0));
+            }
+
+            void RemoveUser(OsuApi.Model.User user)
+            {
+                var tempFile = Path.GetTempFileName();
+                var keptUsers = File.ReadLines(OsuScorePath).Where(x => x != $"{user.Username}");
+                File.WriteAllLines(OsuScorePath, keptUsers);
+                File.Delete(OsuScorePath);
+                File.Move(tempFile, OsuScorePath); 
+            }
         }
 
         private string FormatScoreImage(Score score)
