@@ -115,13 +115,21 @@ namespace ChitoseV2.Commands
                 Score[] UserRecentScores = await OsuApi.GetUserRecent.WithUser(user).Results();
                 foreach (var recentScore in UserRecentScores.OrderBy(score => score.Date))
                 {
-                    if (IsNewScore(recentScore))
+                    if (IsNewScore(recentScore) && recentScore.Rank != Rank.F)
                     {
-                        UpdateUser(recentScore.Username, recentScore.Date);
-                        var beatmap = (await OsuApi.GetSpecificBeatmap.WithId(recentScore.BeatmapId).Results(1)).FirstOrDefault();
-                        await osuChannel.SendFile(new Uri($"https://assets.ppy.sh/beatmaps/{beatmap.BeatmapSetId}/covers/cover.jpg"));
-                        await osuChannel.SendMessage(FormatUserScore(user, recentScore, beatmap));
-                        await Task.Delay(5000);
+                        try
+                        {
+                            UpdateUser(recentScore.Username, recentScore.Date);
+                            var beatmap = (await OsuApi.GetSpecificBeatmap.WithId(recentScore.BeatmapId).Results(1)).FirstOrDefault();
+                            await osuChannel.SendFile(new Uri($"https://assets.ppy.sh/beatmaps/{beatmap.BeatmapSetId}/covers/cover.jpg"));
+                            await osuChannel.SendMessage(FormatUserScore(user, recentScore, beatmap));
+                            await Task.Delay(5000);
+                            return; 
+                        }
+                        catch
+                        {
+                            // No errors in code if use try catch block :thinking:
+                        }
                     }
                 }
             }
