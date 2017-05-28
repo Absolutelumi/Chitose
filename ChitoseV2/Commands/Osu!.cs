@@ -137,7 +137,7 @@ namespace ChitoseV2
 
             client.MessageReceived += async (s, e) =>
             {
-                if (e.Message.User.IsBot == false && e.Message.Text[0] != '!')
+                if (e.Message.User.IsBot == false)
                 {
                     foreach (BeatmapResult result in ExtractBeatmapsFromText(e.Message.Text))
                     {

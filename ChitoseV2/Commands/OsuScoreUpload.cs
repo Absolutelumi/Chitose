@@ -10,22 +10,22 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
+using ChitoseV2.Framework;
+using System.Drawing.Imaging;
 
 namespace ChitoseV2.Commands
 {
     internal class OsuScoreUpload : ICommandSet
     {
-        private static readonly string BaseImagePath;
         private static readonly Api OsuApi = new Api(Chitose.APIKey);
         private static readonly string OsuScorePath = Chitose.ConfigDirectory + "Osu!Score.txt";
-        private static readonly string TempImagePath;
         private DiscordClient Client;
         private Dictionary<string, DateTime> LatestUpdate;
 
         public void AddCommands(DiscordClient client, CommandService commands)
         {
             Client = client;
-            Timer timer = new Timer(60000);
+            Timer timer = new Timer(10000);
             timer.AutoReset = true;
             timer.Elapsed += (_, __) => SendUserRecentScore();
             timer.Start();
@@ -64,21 +64,28 @@ namespace ChitoseV2.Commands
                     await e.Channel.SendMessage("User not on record.");
                 }
             });
-        }
 
-        private string FormatScoreImage(Score score)
-        {
-            Bitmap ScoreImage = new Bitmap(BaseImagePath);
-
-            ScoreImage.Save(TempImagePath);
-
-            return TempImagePath;
+            commands.CreateCommand("Sample").Do(async (e) =>
+            {
+                string username = e.User.Name; 
+                OsuApi.Model.User user = await OsuApi.GetUser.WithUser(username).Result();
+                var scores = await OsuApi.GetUserRecent.WithUser(username).Results();
+                Score score = scores.First();
+                var beatmaps = await OsuApi.GetSpecificBeatmap.WithId(score.BeatmapId).Results();
+                Beatmap beatmap = beatmaps.First(); 
+                using (var temporaryStream = new MemoryStream())
+                {
+                    OsuScoreImage.CreateScorePanel(user, score, beatmap).Save(temporaryStream, ImageFormat.Png);
+                    temporaryStream.Position = 0;
+                    await e.Channel.SendFile("scoreImage.png", temporaryStream);
+                }
+            }); 
         }
 
         private string FormatUserScore(string user, Score score, Beatmap beatmap)
         {
             return new StringBuilder()
-                .AppendLine($"{user} just {(score.Rank == Rank.F ? "failed with" : "got")} a {score.Accuracy:P2} on {beatmap.Title} [{beatmap.Difficulty}]")
+                .AppendLine($"{user} just {(score.Rank == Rank.F ? "failed with" : "got")} a {score.Accuracy:0.00%} on {beatmap.Title} [{beatmap.Difficulty}]")
                 .AppendLine($"with {score.Combo} combo and {score.Mods}")
                 .AppendLine($"*300s:* {score.NumberOf300s}  *100s:* {score.NumberOf100s}  *50s:* {score.NumberOf50s}  *Misses:* {score.NumberOfMisses}")
                 .ToString();
@@ -112,26 +119,23 @@ namespace ChitoseV2.Commands
             var users = LatestUpdate.Keys.ToArray();
             foreach (string user in users)
             {
-                Score[] UserRecentScores = await OsuApi.GetUserRecent.WithUser(user).Results();
-                foreach (var recentScore in UserRecentScores.OrderBy(score => score.Date))
+                try
                 {
-                    if (IsNewScore(recentScore) && recentScore.Rank != Rank.F)
+                    Score[] UserRecentScores = await OsuApi.GetUserRecent.WithUser(user).Results();
+                    foreach (var recentScore in UserRecentScores.OrderBy(score => score.Date))
                     {
-                        try
+                        if (IsNewScore(recentScore) && recentScore.Rank != Rank.F)
                         {
                             UpdateUser(recentScore.Username, recentScore.Date);
                             var beatmap = (await OsuApi.GetSpecificBeatmap.WithId(recentScore.BeatmapId).Results(1)).FirstOrDefault();
                             await osuChannel.SendFile(new Uri($"https://assets.ppy.sh/beatmaps/{beatmap.BeatmapSetId}/covers/cover.jpg"));
                             await osuChannel.SendMessage(FormatUserScore(user, recentScore, beatmap));
                             await Task.Delay(5000);
-                            return; 
-                        }
-                        catch
-                        {
-                            // No errors in code if use try catch block :thinking:
+                            return;
                         }
                     }
                 }
+                catch { }
             }
         }
 

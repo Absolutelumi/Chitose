@@ -211,6 +211,7 @@
     <Compile Include="Commands\Osu!.cs" />
     <Compile Include="Commands\Pictures.cs" />
     <Compile Include="Framework\NsfwManager.cs" />
+    <Compile Include="Framework\OsuScoreImage.cs" />
     <Compile Include="Framework\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\ServerUpdates.cs" />
@@ -242,7 +243,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Osu-Sharp\OsuApi\OsuApi.csproj">
+    <ProjectReference Include="..\Osu-Sharp\Osu-Sharp\OsuApi\OsuApi.csproj">
       <Project>{426b006f-2c0c-4f3c-8698-ce60d4b4b1d9}</Project>
       <Name>OsuApi</Name>
     </ProjectReference>

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.6
+VisualStudioVersion = 15.0.26403.7
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChitoseV2", "ChitoseV2\ChitoseV2.csproj", "{3766185F-88F9-4CCA-ABF9-6A58E6DDEA8B}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChitoseV2", "ChitoseV2\Chit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedditSharp", "RedditSharp\RedditSharp\RedditSharp.csproj", "{A368CB75-75F0-4489-904D-B5CEBB0FE624}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OsuApi", "Osu-Sharp\OsuApi\OsuApi.csproj", "{426B006F-2C0C-4F3C-8698-CE60D4B4B1D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OsuApi", "Osu-Sharp\Osu-Sharp\OsuApi\OsuApi.csproj", "{426B006F-2C0C-4F3C-8698-CE60D4B4B1D9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
