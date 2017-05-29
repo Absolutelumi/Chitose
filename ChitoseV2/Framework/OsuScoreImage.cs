@@ -46,12 +46,15 @@ namespace ChitoseV2.Framework
                 DrawWhiteOverlay(background, graphics);
                 DrawAvatar(graphics, user.UserID);
                 DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Beatmapper);
+                DrawCreator(graphics, beatmap); 
                 DrawUsername(user, graphics);
                 if (score.Mods != Mods.NM)
                     DrawMods(score, graphics);
-                DrawPP(user, score, graphics);
+                if (score.PP != 0)
+                    DrawPP(user, score, graphics);
                 DrawRank(score, graphics);
-                DrawAcc(score, graphics); 
+                DrawAcc(score, graphics);
+                DrawCombo(score, graphics); 
             }
             return background;
         }
@@ -83,29 +86,61 @@ namespace ChitoseV2.Framework
             SizeF difficultySize = graphics.MeasureString(difficultyString, titleFont);
             float remainingWidth = maxWidth - difficultySize.Width;
             SizeF titleSize = graphics.MeasureString(title, titleFont);
-            titlePath.AddString(title, titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 140, new Point(10, 10), titleFormat);
-            titlePath.AddString(difficultyString, titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 140, new Point(10 + (int)graphics.MeasureString(title, titleFont).Width, 10), new StringFormat());
+            titlePath.AddString(title + " " + difficultyString, titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 150, new Point(15, 10), titleFormat);
             graphics.DrawPath(WhitePen, titlePath);
             graphics.FillPath(BlueBrush, titlePath); 
+        }
+
+        private static void DrawCreator(Graphics graphics, Beatmap beatmap)
+        {
+            string mappedBy = "mapped by " + beatmap.Beatmapper;
+            GraphicsPath creatorPath = new GraphicsPath();
+            Font creatorFont = new Font("Calibri", 60, GraphicsUnit.Point);
+            creatorPath.AddString(mappedBy, creatorFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 180, new Point(15, 50), new StringFormat());
+            graphics.DrawPath(WhitePen, creatorPath);
+            graphics.FillPath(BlueBrush, creatorPath); 
         }
 
         private static void DrawUsername(User user, Graphics graphics)
         {
             Font usernameFont = new Font("Calibri", 60, GraphicsUnit.Point);
+            var usernameSize = usernameFont.Size; 
             GraphicsPath usernamePath = new GraphicsPath();
-            usernamePath.AddString(user.Username, usernameFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 80, new Point(25 + AvatarSize, BackgroundHeight - 90), new StringFormat());
+            usernamePath.AddString(user.Username, usernameFont.FontFamily, (int)FontStyle.Regular, 60, new Point(25 + AvatarSize, 170), new StringFormat());
             graphics.DrawPath(WhitePen, usernamePath);
             graphics.FillPath(BlueBrush, usernamePath);
         }
 
-        private static void DrawPP(User user, Score score, Graphics graphics) //Needs alignment
+        private static void DrawPP(User user, Score score, Graphics graphics) 
         {
-            var ppFont = new Font("Calibri", 60, GraphicsUnit.Point);
-            GraphicsPath ppPath = new GraphicsPath();
-            Point ppPoint = new Point(20 + AvatarSize + (int)graphics.MeasureString(user.Username, new Font("Calibri", 60, GraphicsUnit.Point)).Width, BackgroundHeight - 100);
-            ppPath.AddString(score.PP + "pp", ppFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 80, ppPoint, new StringFormat());
-            graphics.DrawPath(WhitePen, ppPath);
-            graphics.FillPath(PinkBrush, ppPath); 
+            var ppFont = new Font("Calibri", 224, GraphicsUnit.Point);
+            Brush ppBrush = new SolidBrush(Color.FromArgb(150, 238, 34, 153));
+            graphics.RotateTransform(30); 
+            graphics.DrawString(score.PP + " pp", ppFont, ppBrush, new Point(50, 10)); 
+        }
+
+        private static void DrawAcc(Score score, Graphics graphics)
+        {
+            string acc = $"{score.Accuracy:0.00%}";
+            Font accFont = new Font("Calibri", 60, GraphicsUnit.Point);
+            GraphicsPath accPath = new GraphicsPath();
+            StringFormat accFormat = new StringFormat();
+            accFormat.Alignment = StringAlignment.Far; 
+            accPath.AddString(acc, accFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(800, 170), accFormat);
+            graphics.DrawPath(WhitePen, accPath);
+            graphics.FillPath(PinkBrush, accPath); 
+        }
+
+        private static void DrawCombo(Score score, Graphics graphics)
+        {
+            string combo = score.Combo.ToString() + "x";
+            Font comboFont = new Font("Calibri", 60, GraphicsUnit.Point);
+            StringFormat comboFormat = new StringFormat();
+            GraphicsPath comboPath = new GraphicsPath(); 
+            comboFormat.Alignment = StringAlignment.Far;
+            comboPath.AddString(combo, comboFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(800, 110), comboFormat);
+            graphics.DrawPath(WhitePen, comboPath);
+            graphics.FillPath(PinkBrush, comboPath);
         }
 
         private static void DrawMods(Score score, Graphics graphics)
@@ -113,7 +148,7 @@ namespace ChitoseV2.Framework
             string mods = score.Mods.ToString(); 
             Font modFont = new Font("Calibri", 48, GraphicsUnit.Point);
             GraphicsPath modPath = new GraphicsPath();
-            modPath.AddString(mods, modFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 100, new Point(25 + AvatarSize, 90), new StringFormat());
+            modPath.AddString(mods, modFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 48 / 100, new Point(25 + AvatarSize, 120), new StringFormat());
             graphics.DrawPath(WhitePen, modPath);
             graphics.FillPath(PinkBrush, modPath); 
         }
@@ -123,15 +158,13 @@ namespace ChitoseV2.Framework
             string rank = score.Rank.ToString();
             Font rankFont = new Font("Calibri", 128, GraphicsUnit.Point);
             GraphicsPath rankPath = new GraphicsPath();
-            rankPath.AddString(rank, rankFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 40, new Point(780, 90), new StringFormat());
+            StringFormat rankFormat = new StringFormat();
+            rankFormat.Alignment = StringAlignment.Center; 
+            rankPath.AddString(rank, rankFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 128 / 72, new Point(830, 60), rankFormat);
             graphics.DrawPath(WhitePen, rankPath);
             graphics.FillPath(PinkBrush, rankPath); 
         }
 
-        private static void DrawAcc(Score score, Graphics graphics)
-        {
-            string acc = $"{score.Accuracy:0.00%}";
-        }
 
         private static void DrawWhiteOverlay(Bitmap background, Graphics graphics)
         {
