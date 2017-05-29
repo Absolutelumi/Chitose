@@ -45,7 +45,7 @@ namespace ChitoseV2.Framework
 
                 DrawWhiteOverlay(background, graphics);
                 DrawAvatar(graphics, user.UserID);
-                DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Beatmapper);
+                DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Stars.ToString("#.##"), beatmap.Beatmapper);
                 DrawCreator(graphics, beatmap); 
                 DrawUsername(user, graphics);
                 if (score.Mods != Mods.NM)
@@ -74,7 +74,7 @@ namespace ChitoseV2.Framework
             }
         }
 
-        private static void DrawTitle(Graphics graphics, string title, string difficulty, string beatmapper)
+        private static void DrawTitle(Graphics graphics, string title, string difficulty, string stars, string beatmapper)
         {
             Font titleFont = new Font("Calibri", 36, GraphicsUnit.Point);
             StringFormat titleFormat = new StringFormat();
@@ -86,7 +86,7 @@ namespace ChitoseV2.Framework
             SizeF difficultySize = graphics.MeasureString(difficultyString, titleFont);
             float remainingWidth = maxWidth - difficultySize.Width;
             SizeF titleSize = graphics.MeasureString(title, titleFont);
-            titlePath.AddString(title + " " + difficultyString, titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 150, new Point(15, 10), titleFormat);
+            titlePath.AddString(title + " " + difficultyString + $" {stars}*", titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 150, new Point(15, 10), titleFormat);
             graphics.DrawPath(WhitePen, titlePath);
             graphics.FillPath(BlueBrush, titlePath); 
         }
