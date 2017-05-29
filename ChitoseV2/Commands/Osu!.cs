@@ -47,7 +47,7 @@ namespace ChitoseV2
 
             commands.CreateCommand("scores").Parameter("beatmapid").Do(async (e) =>
             {
-                Score[] scores = await OsuApi.GetScores.OnBeatmapWithId(e.GetArg("beatmapid")).WithMods(Mods.Nightcore).Results();
+                Score[] scores = await OsuApi.GetScores.OnBeatmapWithId(e.GetArg("beatmapid")).WithMods(Mods.NC).Results();
                 Console.WriteLine(scores.Length);
             });
 

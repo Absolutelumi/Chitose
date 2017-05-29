@@ -120,7 +120,12 @@ namespace ChitoseV2.Commands
                             UpdateUser(recentScore.Username, recentScore.Date);
                             var beatmap = (await OsuApi.GetSpecificBeatmap.WithId(recentScore.BeatmapId).Results(1)).FirstOrDefault();
                             OsuApi.Model.User user = await OsuApi.GetUser.WithUser(username).Result();
-                            OsuScoreImage.CreateScorePanel(user, recentScore, beatmap); 
+                            using (var temporaryStream = new MemoryStream())
+                            {
+                                OsuScoreImage.CreateScorePanel(user, recentScore, beatmap).Save(temporaryStream, ImageFormat.Png);
+                                temporaryStream.Position = 0;
+                                await osuChannel.SendFile("scoreImage.png", temporaryStream);
+                            }
                             await Task.Delay(5000);
                             return;
                         }

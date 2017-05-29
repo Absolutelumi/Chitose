@@ -27,6 +27,11 @@ namespace ChitoseV2.Framework
 
         private static Bitmap AcquireBackground(string beatmapId) => new Bitmap(Extensions.GetHttpStream(new Uri($"https://assets.ppy.sh/beatmaps/{beatmapId}/covers/cover.jpg")));
 
+        static OsuScoreImage()
+        {
+            WhitePen.LineJoin = LineJoin.Round; 
+        }
+
         public static Bitmap CreateScorePanel(User user, Score score, Beatmap beatmap)
         {
             var background = AcquireBackground(beatmap.BeatmapSetId);
@@ -42,8 +47,11 @@ namespace ChitoseV2.Framework
                 DrawAvatar(graphics, user.UserID);
                 DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Beatmapper);
                 DrawUsername(user, graphics);
-                DrawMods(score, graphics); 
-                DrawPP(user, score, graphics); 
+                if (score.Mods != Mods.NM)
+                    DrawMods(score, graphics);
+                DrawPP(user, score, graphics);
+                DrawRank(score, graphics);
+                DrawAcc(score, graphics); 
             }
             return background;
         }
@@ -65,38 +73,37 @@ namespace ChitoseV2.Framework
 
         private static void DrawTitle(Graphics graphics, string title, string difficulty, string beatmapper)
         {
+            Font titleFont = new Font("Calibri", 36, GraphicsUnit.Point);
             StringFormat titleFormat = new StringFormat();
             GraphicsPath titlePath = new GraphicsPath();
             titleFormat.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces | StringFormatFlags.NoClip;
             titleFormat.Trimming = StringTrimming.EllipsisCharacter;
-            var whitePen = new Pen(Color.White, StrokeWidth * 2);
-            var maxWidth = BackgroundWidth - 40 - StrokeWidth * 2;
-            var difficultyString = $"[{difficulty}]";
-            var titleFont = new Font("Calibri", 36, GraphicsUnit.Point);
-            var difficultySize = graphics.MeasureString(difficultyString, titleFont);
-            var remainingWidth = maxWidth - difficultySize.Width;
-            var titleSize = graphics.MeasureString(title, titleFont);
-            titlePath.AddString(title, titleFont.FontFamily, 3, 3f, new RectangleF(10f, 10f, 30, 30), titleFormat);
-            graphics.DrawString(title, titleFont, BlueBrush, 20f, 10f, titleFormat);
-            titlePath.AddString(difficultyString, titleFont.FontFamily, 3, 3f, new RectangleF(10f, 10f, 30, 30), null);
-            graphics.DrawString(difficultyString, titleFont, BlueBrush, 20f + graphics.MeasureString(title, titleFont).Width, 10f);
+            string difficultyString = $"[{difficulty}]";
+            int maxWidth = BackgroundWidth - 40 - StrokeWidth * 2;
+            SizeF difficultySize = graphics.MeasureString(difficultyString, titleFont);
+            float remainingWidth = maxWidth - difficultySize.Width;
+            SizeF titleSize = graphics.MeasureString(title, titleFont);
+            titlePath.AddString(title, titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 140, new Point(10, 10), titleFormat);
+            titlePath.AddString(difficultyString, titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 140, new Point(10 + (int)graphics.MeasureString(title, titleFont).Width, 10), new StringFormat());
+            graphics.DrawPath(WhitePen, titlePath);
+            graphics.FillPath(BlueBrush, titlePath); 
         }
 
         private static void DrawUsername(User user, Graphics graphics)
         {
             Font usernameFont = new Font("Calibri", 60, GraphicsUnit.Point);
             GraphicsPath usernamePath = new GraphicsPath();
-            usernamePath.AddString(user.Username, usernameFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 72, new Point(20 + AvatarSize, BackgroundHeight - 100), new StringFormat());
+            usernamePath.AddString(user.Username, usernameFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 80, new Point(25 + AvatarSize, BackgroundHeight - 90), new StringFormat());
             graphics.DrawPath(WhitePen, usernamePath);
             graphics.FillPath(BlueBrush, usernamePath);
         }
 
-        private static void DrawPP(User user, Score score, Graphics graphics)
+        private static void DrawPP(User user, Score score, Graphics graphics) //Needs alignment
         {
             var ppFont = new Font("Calibri", 60, GraphicsUnit.Point);
             GraphicsPath ppPath = new GraphicsPath();
             Point ppPoint = new Point(20 + AvatarSize + (int)graphics.MeasureString(user.Username, new Font("Calibri", 60, GraphicsUnit.Point)).Width, BackgroundHeight - 100);
-            ppPath.AddString(score.PP + "pp", ppFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 72, ppPoint, new StringFormat());
+            ppPath.AddString(score.PP + "pp", ppFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 80, ppPoint, new StringFormat());
             graphics.DrawPath(WhitePen, ppPath);
             graphics.FillPath(PinkBrush, ppPath); 
         }
@@ -106,7 +113,7 @@ namespace ChitoseV2.Framework
             string mods = score.Mods.ToString(); 
             Font modFont = new Font("Calibri", 48, GraphicsUnit.Point);
             GraphicsPath modPath = new GraphicsPath();
-            modPath.AddString(mods, modFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 72, new Point(20 + AvatarSize, BackgroundHeight - 200), new StringFormat());
+            modPath.AddString(mods, modFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 100, new Point(25 + AvatarSize, 90), new StringFormat());
             graphics.DrawPath(WhitePen, modPath);
             graphics.FillPath(PinkBrush, modPath); 
         }
@@ -114,6 +121,11 @@ namespace ChitoseV2.Framework
         private static void DrawRank(Score score, Graphics graphics)
         {
             string rank = score.Rank.ToString();
+            Font rankFont = new Font("Calibri", 128, GraphicsUnit.Point);
+            GraphicsPath rankPath = new GraphicsPath();
+            rankPath.AddString(rank, rankFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 40, new Point(780, 90), new StringFormat());
+            graphics.DrawPath(WhitePen, rankPath);
+            graphics.FillPath(PinkBrush, rankPath); 
         }
 
         private static void DrawAcc(Score score, Graphics graphics)
