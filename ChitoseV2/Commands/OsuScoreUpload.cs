@@ -82,15 +82,6 @@ namespace ChitoseV2.Commands
             }); 
         }
 
-        private string FormatUserScore(string user, Score score, Beatmap beatmap)
-        {
-            return new StringBuilder()
-                .AppendLine($"{user} just {(score.Rank == Rank.F ? "failed with" : "got")} a {score.Accuracy:0.00%} on {beatmap.Title} [{beatmap.Difficulty}]")
-                .AppendLine($"with {score.Combo} combo and {score.Mods}")
-                .AppendLine($"*300s:* {score.NumberOf300s}  *100s:* {score.NumberOf100s}  *50s:* {score.NumberOf50s}  *Misses:* {score.NumberOfMisses}")
-                .ToString();
-        }
-
         private void GetUsers()
         {
             foreach (var data in File.ReadAllLines(OsuScorePath))
@@ -117,19 +108,19 @@ namespace ChitoseV2.Commands
         {
             Channel osuChannel = Client.FindServers("Too Too Roo").First().FindChannels("osu-scores").First();
             var users = LatestUpdate.Keys.ToArray();
-            foreach (string user in users)
+            foreach (string username in users)
             {
                 try
                 {
-                    Score[] UserRecentScores = await OsuApi.GetUserRecent.WithUser(user).Results();
+                    Score[] UserRecentScores = await OsuApi.GetUserRecent.WithUser(username).Results();
                     foreach (var recentScore in UserRecentScores.OrderBy(score => score.Date))
                     {
                         if (IsNewScore(recentScore) && recentScore.Rank != Rank.F)
                         {
                             UpdateUser(recentScore.Username, recentScore.Date);
                             var beatmap = (await OsuApi.GetSpecificBeatmap.WithId(recentScore.BeatmapId).Results(1)).FirstOrDefault();
-                            await osuChannel.SendFile(new Uri($"https://assets.ppy.sh/beatmaps/{beatmap.BeatmapSetId}/covers/cover.jpg"));
-                            await osuChannel.SendMessage(FormatUserScore(user, recentScore, beatmap));
+                            OsuApi.Model.User user = await OsuApi.GetUser.WithUser(username).Result();
+                            OsuScoreImage.CreateScorePanel(user, recentScore, beatmap); 
                             await Task.Delay(5000);
                             return;
                         }

@@ -18,7 +18,7 @@ namespace ChitoseV2
         {
             commands.CreateGroup("music", cgb =>
             {
-                cgb.CreateCommand("add").Parameter("song", ParameterType.Multiple).Description("Adds the most relevant video to the queue").Do(async (e) =>
+                cgb.CreateCommand("add").Parameter("song", ParameterType.Unparsed).Description("Adds the most relevant video to the queue").Do(async (e) =>
                 {
                     string title = await music.AddToQueue(e.Args);
                     if (title != null)
