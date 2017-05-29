@@ -126,7 +126,7 @@ namespace ChitoseV2.Framework
             GraphicsPath accPath = new GraphicsPath();
             StringFormat accFormat = new StringFormat();
             accFormat.Alignment = StringAlignment.Far; 
-            accPath.AddString(acc, accFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(800, 170), accFormat);
+            accPath.AddString(acc, accFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(750, 170), accFormat);
             graphics.DrawPath(WhitePen, accPath);
             graphics.FillPath(PinkBrush, accPath); 
         }
@@ -138,7 +138,7 @@ namespace ChitoseV2.Framework
             StringFormat comboFormat = new StringFormat();
             GraphicsPath comboPath = new GraphicsPath(); 
             comboFormat.Alignment = StringAlignment.Far;
-            comboPath.AddString(combo, comboFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(800, 110), comboFormat);
+            comboPath.AddString(combo, comboFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(750, 110), comboFormat);
             graphics.DrawPath(WhitePen, comboPath);
             graphics.FillPath(PinkBrush, comboPath);
         }
