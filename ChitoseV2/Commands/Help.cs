@@ -16,9 +16,9 @@ namespace ChitoseV2.Commands
                 "**osu <user>**: Displays profile information for that user \n" +
                 "**purge <user>(optional)**: Purges last 50 messages of channel if user is left null, and last 50 messages of that user if given \n" +
                 "**rate <waifu>**: Randomly generates score out of 100 for <waifu> \n" +
+                "**anime <anime>**: Gives information of anime (From MAL) \n" +
                 "\n" +
                 "__**Music Commands**__ \n" +
-                "**Note: use !music <command>** \n" +
                 "**add <song>**: Adds <song> to quene \n" +
                 "**clear**: Clears quene \n" +
                 "**skip**: Skips currently playing song \n" +
@@ -38,7 +38,14 @@ namespace ChitoseV2.Commands
                 "**show <tags>**: Shows non-NSFW anime picture with same <tags> \n" +
                 "**i**: Shows random NSFW hentai picture \n" +
                 "**Blur <blur level> <picture link>**: Blurs the picture with gaussian blur \n" +
-                "**tint <color> <picture link>**: Tints the picture with selected color";
+                "**tint <color> <picture link>**: Tints the picture with selected color \n" +
+                "\n" +
+                "__**Osu! Commands**__ \n" +
+                "**user <user>**: Gives stats for specified user (Standard only) \n" +
+                "**beatmap <beatmap_score_picture>**: Take a picture of a score, and then type the command directly under to get the info of that beatmap \n" +
+                "**<betamapURL>**: Will give info of beatmap \n" +
+                "**follow <osu_Username>**: (Only works if have channel named 'osu-scores') Will add the user to a queue to send every ranked submitted play to 'osu-scores' \n" +
+                "**unfollow <osu_Username>**: Cancels the above \n";
 
                 await e.User.SendMessage(HelpMessage);
             });

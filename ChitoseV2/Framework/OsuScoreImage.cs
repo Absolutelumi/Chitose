@@ -45,7 +45,10 @@ namespace ChitoseV2.Framework
 
                 DrawWhiteOverlay(background, graphics);
                 DrawAvatar(graphics, user.UserID);
-                DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Stars.ToString("#.##"), beatmap.Beatmapper);
+                if (score.Mods.ToString().Contains("DT") || score.Mods.ToString().Contains("NC"))
+                    DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, GetStarsWithMod(beatmap).ToString("#.##"), beatmap.Beatmapper);
+                else
+                    DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Stars.ToString("#.##"), beatmap.Beatmapper);
                 DrawCreator(graphics, beatmap); 
                 DrawUsername(user, graphics);
                 if (score.Mods != Mods.NM)
@@ -190,6 +193,15 @@ namespace ChitoseV2.Framework
             graphicsPath.AddArc(x, y + height - diameter, diameter, diameter, 90, 90);
             graphicsPath.CloseFigure();
             return graphicsPath;
+        }
+
+        private static double GetStarsWithMod(Beatmap beatmap)
+        {
+            double stars = beatmap.Stars; 
+
+
+
+            return stars; 
         }
     }
 }
