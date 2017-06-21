@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
+using System;
 using System.Linq;
 
 namespace ChitoseV2
@@ -7,6 +8,8 @@ namespace ChitoseV2
     internal class ServerUpdates : ICommandSet
     {
         private MusicModule music;
+
+        private Random random; 
 
         public ServerUpdates(MusicModule music)
         {
@@ -27,6 +30,28 @@ namespace ChitoseV2
 
                 await channel.SendMessage(string.Format("@everyone {0} has joined the server!", user.Name));
             };
+
+            commands.CreateCommand("dothatshitnigga").Do(async (e) =>
+            {
+                User[] users = e.Server.Users.ToArray();
+
+                foreach (User user in users)
+                {
+                    int randomR = random.Next(0, 256);
+
+                    int randomG = random.Next(0, 256);
+
+                    int randomB = random.Next(0, 256);
+
+                    Role userRole = await e.Server.CreateRole(name: $"{e.User.Name}", color: new Color(randomR, randomG, randomB));
+
+                    Role[] roles = { userRole };
+
+                    await user.AddRoles(roles);
+                }
+
+                await e.Channel.SendMessage("the shit is done my nigga");
+            });
 
             client.UserLeft += async (s, e) =>
             {

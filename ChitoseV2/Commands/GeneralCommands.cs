@@ -139,6 +139,22 @@ namespace ChitoseV2
             {
                 await e.Channel.SendMessage("The command is !helpme you insolent fuck"); 
             });
+
+            commands.CreateCommand("roll").Parameter("sides", ParameterType.Optional).Parameter("times", ParameterType.Optional).Do(async (e) =>
+            {
+                Random random = Extensions.rng; 
+
+                int sides = e.GetArg("sides") == string.Empty ? 6 : int.Parse(e.GetArg("sides"));
+                int times = e.GetArg("times") == string.Empty ? 1 : int.Parse(e.GetArg("times"));
+
+                int[] roles = new int[times];
+                for (int i = 0; i < roles.Length; i++)
+                {
+                    roles[i] = random.Next(1, sides + 1);
+                }
+
+                await e.Channel.SendMessage(":game_die: " + string.Join(" , ", roles));
+            });
         }
     }
 }
