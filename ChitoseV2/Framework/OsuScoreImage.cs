@@ -21,11 +21,19 @@ namespace ChitoseV2.Framework
 
         private static Brush PinkBrush = new SolidBrush(Color.FromArgb(255, 238, 34, 153));
 
+        private static Brush SilverBrush = new SolidBrush(Color.Silver); 
+
         private static Pen WhitePen = new Pen(Color.White, StrokeWidth * 2);
+
+        private static Pen SilverPen = new Pen(Color.Silver, StrokeWidth * 2); 
+
+        private static Pen PinkPen = new Pen(Color.FromArgb(255, 238, 34, 153), StrokeWidth * 2); 
 
         private static Bitmap AcquireAvatar(string userId) => new Bitmap(Extensions.GetHttpStream(new Uri($"https://a.ppy.sh/{userId}")));
 
         private static Bitmap AcquireBackground(string beatmapId) => new Bitmap(Extensions.GetHttpStream(new Uri($"https://assets.ppy.sh/beatmaps/{beatmapId}/covers/cover.jpg")));
+
+        private static Font rankFont = new Font("Calibri", 128, GraphicsUnit.Point);
 
         static OsuScoreImage()
         {
@@ -45,10 +53,7 @@ namespace ChitoseV2.Framework
 
                 DrawWhiteOverlay(background, graphics);
                 DrawAvatar(graphics, user.UserID);
-                if (score.Mods.ToString().Contains("DT") || score.Mods.ToString().Contains("NC"))
-                    DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, GetStarsWithMod(beatmap).ToString("#.##"), beatmap.Beatmapper);
-                else
-                    DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Stars.ToString("#.##"), beatmap.Beatmapper);
+                DrawTitle(graphics, beatmap.Title, beatmap.Difficulty, beatmap.Stars.ToString("#.##"), beatmap.Beatmapper);
                 DrawCreator(graphics, beatmap); 
                 DrawUsername(user, graphics);
                 if (score.Mods != Mods.NM)
@@ -89,6 +94,8 @@ namespace ChitoseV2.Framework
             SizeF difficultySize = graphics.MeasureString(difficultyString, titleFont);
             float remainingWidth = maxWidth - difficultySize.Width;
             SizeF titleSize = graphics.MeasureString(title, titleFont);
+            if (titleSize.Width >= BackgroundWidth / 2 - 20)
+                title = TrimTitle(title, graphics, titleFont); 
             titlePath.AddString(title + " " + difficultyString + $" {stars}*", titleFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 150, new Point(15, 10), titleFormat);
             graphics.DrawPath(WhitePen, titlePath);
             graphics.FillPath(BlueBrush, titlePath); 
@@ -129,7 +136,7 @@ namespace ChitoseV2.Framework
             GraphicsPath accPath = new GraphicsPath();
             StringFormat accFormat = new StringFormat();
             accFormat.Alignment = StringAlignment.Far; 
-            accPath.AddString(acc, accFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(750, 170), accFormat);
+            accPath.AddString(acc, accFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(GetByRank(score, graphics), 170), accFormat);
             graphics.DrawPath(WhitePen, accPath);
             graphics.FillPath(PinkBrush, accPath); 
         }
@@ -141,7 +148,7 @@ namespace ChitoseV2.Framework
             StringFormat comboFormat = new StringFormat();
             GraphicsPath comboPath = new GraphicsPath(); 
             comboFormat.Alignment = StringAlignment.Far;
-            comboPath.AddString(combo, comboFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(750, 110), comboFormat);
+            comboPath.AddString(combo, comboFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 60 / 110, new Point(GetByRank(score, graphics), 110), comboFormat);
             graphics.DrawPath(WhitePen, comboPath);
             graphics.FillPath(PinkBrush, comboPath);
         }
@@ -158,14 +165,22 @@ namespace ChitoseV2.Framework
 
         private static void DrawRank(Score score, Graphics graphics)
         {
-            string rank = score.Rank.ToString();
-            Font rankFont = new Font("Calibri", 128, GraphicsUnit.Point);
+            string rank = score.Rank.ToString().Contains("H") ? score.Rank.ToString().Replace("H", string.Empty) : score.Rank.ToString();
+            rank = rank.Contains("X") ? rank.Replace("X", "S") : rank;
             GraphicsPath rankPath = new GraphicsPath();
             StringFormat rankFormat = new StringFormat();
-            rankFormat.Alignment = StringAlignment.Center; 
-            rankPath.AddString(rank, rankFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 128 / 72, new Point(830, 60), rankFormat);
-            graphics.DrawPath(WhitePen, rankPath);
-            graphics.FillPath(PinkBrush, rankPath); 
+            rankFormat.Alignment = StringAlignment.Far; 
+            rankPath.AddString(rank, rankFont.FontFamily, (int)FontStyle.Regular, graphics.DpiY * 128 / 72, new Point(900, 60), rankFormat);
+            if (score.Rank == Rank.SH || score.Rank == Rank.SX)
+            {
+                graphics.DrawPath(PinkPen, rankPath);
+                graphics.FillPath(SilverBrush, rankPath);
+            }
+            else
+            {
+                graphics.DrawPath(WhitePen, rankPath);
+                graphics.FillPath(PinkBrush, rankPath);
+            }   
         }
 
 
@@ -195,13 +210,24 @@ namespace ChitoseV2.Framework
             return graphicsPath;
         }
 
-        private static double GetStarsWithMod(Beatmap beatmap)
+        private static string TrimTitle(string title, Graphics graphics, Font titleFont)
         {
-            double stars = beatmap.Stars; 
+            while (graphics.MeasureString(title, titleFont).Width > BackgroundWidth / 2 - 20)
+            {
+                title = title.Remove(title.Length - 1); 
+            }
 
+            title = title + "..."; 
 
+            return title; 
+        }
 
-            return stars; 
+        private static int GetByRank(Score score, Graphics graphics)
+        {
+            string rank = score.Rank.ToString().Contains("H") ? score.Rank.ToString().Replace("H", string.Empty) : score.Rank.ToString(); 
+            int rankSize = (int)graphics.MeasureString(rank, rankFont).Width;
+
+            return 900 - rankSize + 20; 
         }
     }
 }

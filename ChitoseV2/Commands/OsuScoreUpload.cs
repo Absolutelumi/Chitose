@@ -65,6 +65,28 @@ namespace ChitoseV2.Commands
                 }
             });
 
+            commands.CreateCommand("followlist").Do(async (e) =>
+            {
+                string[] users = LatestUpdate.Keys.ToArray();
+                await e.Channel.SendMessage($"Currently followed users: \n ```{string.Join(", ", users)}```"); 
+            });
+
+            commands.CreateCommand("latestupdate").Parameter("user", ParameterType.Unparsed).Do(async (e) =>
+            {
+                string user = string.Join(" ", e.Args);
+                DateTime updateDate;
+                if (LatestUpdate.ContainsKey(user))
+                {
+                    LatestUpdate.TryGetValue(user, out updateDate);
+                    string latestUpdate = updateDate.ToString(); 
+                    await e.Channel.SendMessage($"User {user} was last updated on {latestUpdate}"); 
+                }
+                else
+                {
+                    await e.Channel.SendMessage("User not found! Note that the capitals on the username must match your username"); 
+                }
+            }); 
+
             commands.CreateCommand("Sample").Do(async (e) =>
             {
                 string username = e.User.Name; 
