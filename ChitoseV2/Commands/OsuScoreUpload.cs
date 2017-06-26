@@ -128,11 +128,11 @@ namespace ChitoseV2.Commands
 
         private async void SendUserRecentScore()
         {
-            try
+            Channel osuChannel = Client.FindServers("Too Too Roo").First().FindChannels("osu-scores").First();
+            var users = LatestUpdate.Keys.ToArray();
+            foreach (string username in users)
             {
-                Channel osuChannel = Client.FindServers("Too Too Roo").First().FindChannels("osu-scores").First();
-                var users = LatestUpdate.Keys.ToArray();
-                foreach (string username in users)
+                try
                 {
                     Score[] UserRecentScores = await OsuApi.GetUserRecent.WithUser(username).Results();
                     foreach (var recentScore in UserRecentScores.OrderBy(score => score.Date))
@@ -153,8 +153,8 @@ namespace ChitoseV2.Commands
                         }
                     }
                 }
+                catch { }
             }
-            catch { }
         }
 
         private void UpdateUser(string user, DateTime time)

@@ -21,13 +21,13 @@ namespace ChitoseV2.Framework
 
         private static Brush PinkBrush = new SolidBrush(Color.FromArgb(255, 238, 34, 153));
 
-        private static Brush SilverBrush = new SolidBrush(Color.Silver); 
+        private static Brush SilverBrush = new SolidBrush(Color.Silver);
 
         private static Pen WhitePen = new Pen(Color.White, StrokeWidth * 2);
 
-        private static Pen SilverPen = new Pen(Color.Silver, StrokeWidth * 2); 
+        private static Pen SilverPen = new Pen(Color.Silver, StrokeWidth * 2);
 
-        private static Pen PinkPen = new Pen(Color.FromArgb(255, 238, 34, 153), StrokeWidth * 2); 
+        private static Pen PinkPen = new Pen(Color.FromArgb(255, 238, 34, 153), StrokeWidth * 2);
 
         private static Bitmap AcquireAvatar(string userId) => new Bitmap(Extensions.GetHttpStream(new Uri($"https://a.ppy.sh/{userId}")));
 
@@ -42,7 +42,7 @@ namespace ChitoseV2.Framework
 
         public static Bitmap CreateScorePanel(User user, Score score, Beatmap beatmap)
         {
-            var background = AcquireBackground(beatmap.BeatmapSetId);
+            var background = RoundedCoreners(AcquireBackground(beatmap.BeatmapSetId), 30, Color.Transparent);
             using (var graphics = Graphics.FromImage(background))
             {
                 graphics.InterpolationMode = InterpolationMode.High;
@@ -208,6 +208,25 @@ namespace ChitoseV2.Framework
             graphicsPath.AddArc(x, y + height - diameter, diameter, diameter, 90, 90);
             graphicsPath.CloseFigure();
             return graphicsPath;
+        }
+
+        private static Bitmap RoundedCoreners(Bitmap StartImage, int CornerRadius, Color BackgroundColor)
+        {
+            CornerRadius *= 2;
+            Bitmap RoundedImage = new Bitmap(StartImage.Width, StartImage.Height);
+            using (Graphics g = Graphics.FromImage(RoundedImage))
+            {
+                g.Clear(BackgroundColor);
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                Brush brush = new TextureBrush(StartImage);
+                GraphicsPath gp = new GraphicsPath();
+                gp.AddArc(0, 0, CornerRadius, CornerRadius, 180, 90);
+                gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0, CornerRadius, CornerRadius, 270, 90);
+                gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 0, 90);
+                gp.AddArc(0, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 90, 90);
+                g.FillPath(brush, gp);
+                return RoundedImage;
+            }
         }
 
         private static string TrimTitle(string title, Graphics graphics, Font titleFont)
