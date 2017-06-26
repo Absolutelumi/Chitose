@@ -210,6 +210,7 @@ namespace ChitoseV2.Framework
             return graphicsPath;
         }
 
+        //For background image
         private static Bitmap RoundedCoreners(Bitmap StartImage, int CornerRadius, Color BackgroundColor)
         {
             CornerRadius *= 2;
