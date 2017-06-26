@@ -42,7 +42,8 @@ namespace ChitoseV2.Framework
 
         public static Bitmap CreateScorePanel(User user, Score score, Beatmap beatmap)
         {
-            var background = RoundedCoreners(AcquireBackground(beatmap.BeatmapSetId), 30, Color.Transparent);
+            Bitmap background = GetRoundedBackground(AcquireBackground(beatmap.BeatmapSetId), beatmap); 
+            
             using (var graphics = Graphics.FromImage(background))
             {
                 graphics.InterpolationMode = InterpolationMode.High;
@@ -65,6 +66,20 @@ namespace ChitoseV2.Framework
                 DrawCombo(score, graphics); 
             }
             return background;
+        }
+        
+        private static Bitmap GetRoundedBackground(Bitmap background, Beatmap beatmap)
+        {
+            Bitmap roundedBackground = new Bitmap(background.Width, background.Height);
+            Brush backgroundBrush = new TextureBrush(background); 
+            GraphicsPath backgroundPath = GetRoundedCorners(0, 0, background.Width, background.Height, 30);
+            using (Graphics graphics = Graphics.FromImage(roundedBackground))
+            {
+                graphics.Clear(Color.Transparent);
+                graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                graphics.FillPath(backgroundBrush, backgroundPath); 
+                return roundedBackground; 
+            }
         }
 
         private static void DrawAvatar(Graphics graphics, string userId)
@@ -208,26 +223,6 @@ namespace ChitoseV2.Framework
             graphicsPath.AddArc(x, y + height - diameter, diameter, diameter, 90, 90);
             graphicsPath.CloseFigure();
             return graphicsPath;
-        }
-
-        //For background image
-        private static Bitmap RoundedCoreners(Bitmap StartImage, int CornerRadius, Color BackgroundColor)
-        {
-            CornerRadius *= 2;
-            Bitmap RoundedImage = new Bitmap(StartImage.Width, StartImage.Height);
-            using (Graphics g = Graphics.FromImage(RoundedImage))
-            {
-                g.Clear(BackgroundColor);
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                Brush brush = new TextureBrush(StartImage);
-                GraphicsPath gp = new GraphicsPath();
-                gp.AddArc(0, 0, CornerRadius, CornerRadius, 180, 90);
-                gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0, CornerRadius, CornerRadius, 270, 90);
-                gp.AddArc(0 + RoundedImage.Width - CornerRadius, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 0, 90);
-                gp.AddArc(0, 0 + RoundedImage.Height - CornerRadius, CornerRadius, CornerRadius, 90, 90);
-                g.FillPath(brush, gp);
-                return RoundedImage;
-            }
         }
 
         private static string TrimTitle(string title, Graphics graphics, Font titleFont)
