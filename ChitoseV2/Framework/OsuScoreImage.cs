@@ -42,7 +42,7 @@ namespace ChitoseV2.Framework
 
         public static Bitmap CreateScorePanel(User user, Score score, Beatmap beatmap)
         {
-            Bitmap background = GetRoundedBackground(AcquireBackground(beatmap.BeatmapSetId), beatmap); 
+            Bitmap background = GetRoundedBackground(AcquireBackground(beatmap.BeatmapSetId)); 
             
             using (var graphics = Graphics.FromImage(background))
             {
@@ -68,7 +68,7 @@ namespace ChitoseV2.Framework
             return background;
         }
         
-        private static Bitmap GetRoundedBackground(Bitmap background, Beatmap beatmap)
+        private static Bitmap GetRoundedBackground(Bitmap background)
         {
             Bitmap roundedBackground = new Bitmap(background.Width, background.Height);
             Brush backgroundBrush = new TextureBrush(background); 
